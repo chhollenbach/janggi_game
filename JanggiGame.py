@@ -2,7 +2,16 @@
 # Date: 2/22/2021
 # A program that implements Classes to play the board game "Janggi" aka Korean chess
 
+# Using external package to add color to terminal print in order to see red/blue side better
+# Remove/comment out before uploading to gradescope?
+from termcolor import colored
+
+
 class GameBoard:
+    """
+    Class representing an empty gameboard. Can return itself, a list of squares in the palace, and display
+    itself in the terminal
+    """
     def __init__(self):
         """Init GameBoard Class with board and palace information"""
         self._board = {x: list('__' for _ in range(10)) for x in ('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i')}
@@ -29,21 +38,71 @@ class GameBoard:
             display_list.append(value)
 
         # Print out list of lists vertically
-        for col in range(len(display_list)):
+        for col in range(10):
             for row in display_list:
                 print(row[col], end=' ')
             print()
 
 
 class JanggiGame:
+    """Class implementation of Janggi. Drives gameplay, links together the GameBoard and GamePiece classes"""
     def __init__(self):
         """Initialize game. Sets up board and places pieces."""
+        # Create Data Members
         self._game_state = 'UNFINISHED'
         self._janggi_board = GameBoard()
-        self._player_turn = 'b'
+        self._player_turn = 'blue'
+
+        # Set up pieces of board - PROBABLY CAN FIGURE OUT A BETTER WAY TO SET THIS UP THAN HARD CODING ALL THIS
+        # General
+        self.place_piece('e2', General('red'))
+        self.place_piece('e9', General('blue'))
+        # Guard
+        self.place_piece('d1', Guard('red'))
+        self.place_piece('f1', Guard('red'))
+        self.place_piece('d10', Guard('blue'))
+        self.place_piece('f10', Guard('blue'))
+        # Horse
+        self.place_piece('c1', Horse('red'))
+        self.place_piece('h1', Horse('red'))
+        self.place_piece('c10', Horse('blue'))
+        self.place_piece('h10', Horse('blue'))
+        # Elephant
+        self.place_piece('b1', Elephant('red'))
+        self.place_piece('g1', Elephant('red'))
+        self.place_piece('b10', Elephant('blue'))
+        self.place_piece('g10', Elephant('blue'))
+        # Chariot
+        self.place_piece('a1', Chariot('red'))
+        self.place_piece('i1', Chariot('red'))
+        self.place_piece('a10', Chariot('blue'))
+        self.place_piece('i10', Chariot('blue'))
+        # Cannon
+        self.place_piece('b3', Cannon('red'))
+        self.place_piece('h3', Cannon('red'))
+        self.place_piece('b8', Cannon('blue'))
+        self.place_piece('h8', Cannon('blue'))
+        # Soldier
+        self.place_piece('a4', Soldier('red'))
+        self.place_piece('c4', Soldier('red'))
+        self.place_piece('e4', Soldier('red'))
+        self.place_piece('g4', Soldier('red'))
+        self.place_piece('i4', Soldier('red'))
+        self.place_piece('a7', Soldier('blue'))
+        self.place_piece('c7', Soldier('blue'))
+        self.place_piece('e7', Soldier('blue'))
+        self.place_piece('g7', Soldier('blue'))
+        self.place_piece('i7', Soldier('blue'))
+
+    def place_piece(self, location, piece):
+        """Places a GamePiece object on the board at a given location. Used to set up game"""
+        # Convert string location (e.g. 'b3') to column and row
+        col = location[0]
+        row = int(location[1:]) - 1
+        self._janggi_board.get_board()[col][row] = piece
 
     def get_game_state(self):
-        """Return state of the game. Can be 'UNFINISHED', 'BLUE_WON', or 'RED_WON' """
+        """Return state of the game. Can be 'UNFINISHED', 'blue'_WON', or 'RED_WON' """
         return self._game_state
 
     def get_janggi_board(self):
@@ -56,18 +115,18 @@ class JanggiGame:
 
     def change_turn(self):
         """Change player_turn"""
-        if self.get_player_turn() == 'b':
-            self._player_turn = 'r'
+        if self.get_player_turn() == 'blue':
+            self._player_turn = 'red'
         else:
-            self._player_turn = 'b'
+            self._player_turn = 'blue'
 
-    def place_piece(self, location, piece):
-        """Places a GamePiece object on the board at a given location. Used to set up game"""
-        # Convert string location (e.g. 'b3') to column and row
-        col = location[0]
-        row = int(location[1:]) - 1
-        self._janggi_board.get_board()[col][row] = piece
-        return True
+    def remove_piece(self, location):
+        """Remove a piece at a location. Used during capturing process"""
+        pass
+
+    def is_in_check(self, team):
+        """If the given team is in check, returns True, otherwise return False"""
+        pass
 
     def make_move(self, location_a, location_b):
         """Move a piece from location a to location b"""
@@ -96,6 +155,7 @@ class JanggiGame:
 
 
 class GamePiece:
+    """Generic GamePiece class, tracks the team of a piece"""
     def __init__(self, team):
         """Initialize GamePiece object with team (string) of piece"""
         self._team = team
@@ -106,66 +166,79 @@ class GamePiece:
 
 
 class General(GamePiece):
+    """General Class. Can move 1 space in any direction within the palace. Goal is to checkmate the enemy General"""
     def __init__(self, team):
         super().__init__(team)
 
     def __str__(self):
-        return "GN"
+        return colored("GN", self._team)
 
 
 class Guard(GamePiece):
+    """Guard Piece, can move 1 space in any direction within the palace"""
     def __init__(self, team):
         super().__init__(team)
 
     def __str__(self):
-        return "GD"
+        return colored("GD", self._team)
 
 
 class Horse(GamePiece):
+    """
+    Horse piece, can move one step orthogonally and one step outward (exactly like a horse in Western chess). Cannot
+    jump units.
+    """
     def __init__(self, team):
         super().__init__(team)
 
     def __str__(self):
-        return "HS"
+        return colored("HS", self._team)
 
 
 class Elephant(GamePiece):
+    """Elephant piece, moves one step orthogonally and then two steps diagonally. Block by pieces, cannot jump."""
     def __init__(self, team):
         super().__init__(team)
 
     def __str__(self):
-        return "EL"
+        return colored("EL", self._team)
 
 
 class Chariot(GamePiece):
+    """Chariot piece, moves in straight line, can move diagonally within palace"""
     def __init__(self, team):
         super().__init__(team)
 
     def __str__(self):
-        return "CH"
+        return colored("CH", self._team)
 
 
 class Cannon(GamePiece):
+    """
+    Cannon piece. The cannon can move any number of spaces in a line, so long as it jumps one piece to do so. The jumped
+    piece can be friendly or enemy. The jumped piece cannot be another cannon.
+    """
     def __init__(self, team):
         super().__init__(team)
 
     def __str__(self):
-        return "CA"
+        return colored("CA", self._team)
 
 
 class Soldier(GamePiece):
+    """
+    Soldier piece. The Solider can move forward or sideways, but not backwards
+    """
     def __init__(self, team):
         super().__init__(team)
 
     def __str__(self):
-        return "SD"
+        return colored("SD", self._team)
 
 
 def main():
     """Main function to test out code"""
     game = JanggiGame()
-    piece1 = Elephant('b')
-    game.place_piece('b1', piece1)
     game.get_janggi_board().display_board()
 
 
