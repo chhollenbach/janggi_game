@@ -22,13 +22,12 @@ class GameBoard:
         """Return _board attribute"""
         return self._board
 
-    def get_blue_palace(self):
-        """Return list of blue palace squares"""
-        return self._blue_palace
-
-    def get_red_palace(self):
-        """Return list of red palace squares"""
-        return self._red_palace
+    def get_palace(self, team):
+        """Return list of palace squares for a team"""
+        if team == 'blue':
+            return self._blue_palace
+        else:
+            return self._red_palace
 
     def display_board(self):
         """Converts dict of lists to list of lists for accurate display of board"""
@@ -42,6 +41,12 @@ class GameBoard:
             for row in display_list:
                 print(row[col], end=' ')
             print()
+
+    def get_square(self, location):
+        """Return a specific square on the board"""
+        col = location[0]
+        row = int(location[1:]) - 1
+        return self._board[col][row]
 
 
 class JanggiGame:
@@ -122,7 +127,10 @@ class JanggiGame:
 
     def remove_piece(self, location):
         """Remove a piece at a location. Used during capturing process"""
-        pass
+        # Convert string location (e.g. 'b3') to column and row
+        col = location[0]
+        row = int(location[1:]) - 1
+        self._janggi_board.get_board()[col][row] = '__'
 
     def is_in_check(self, team):
         """If the given team is in check, returns True, otherwise return False"""
@@ -140,6 +148,7 @@ class JanggiGame:
 
         # If locations are the same, turn is passed
         if location_a == location_b:
+            self.change_turn()
             return True
         # otherwise, move piece, set old square as 0
         else:
@@ -153,33 +162,60 @@ class JanggiGame:
 
         return True
 
-
+# TODO add return method for pieces that returns the diff of all squares able to move to
 class GamePiece:
     """Generic GamePiece class, tracks the team of a piece"""
     def __init__(self, team):
-        """Initialize GamePiece object with team (string) of piece"""
+        """Initialize GamePiece object with team (string) of piece and a piece type"""
         self._team = team
+        self._type = None
 
     def get_team(self):
         """Return team of GamePiece"""
         return self._team
 
+    def get_type(self):
+        """Return type of GamePiece"""
+        return self._type
+
 
 class General(GamePiece):
     """General Class. Can move 1 space in any direction within the palace. Goal is to checkmate the enemy General"""
     def __init__(self, team):
+        """Init General with new type"""
         super().__init__(team)
+        self._type = "General"
 
     def __str__(self):
+        """Override print method to display gamepiece in terminal"""
         return colored("GN", self._team)
 
+    def valid_moves(self, location, gameboard):
+        """Determines valid moves for the piece, given the starting location, and the state of the gameboard"""
+        move_list = []
+        starting_col = location[0]
+        starting_row = int(location[1:])
+        # Create initial 9 possible moves
+        for delta in (-1, 0, 1):
+            move_list.append(chr(ord(starting_col) + delta) + str(starting_row))
+            move_list.append(starting_col + str(starting_row + delta))
+            move_list.append(chr(ord(starting_col) + delta) + str(starting_row + delta))
+        # Filter out if square not in palace
+        for move in move_list:
+            if move not in gameboard.get_palace(self.get_team()):
+                move_list.remove(move)
+
+        print(move_list)
 
 class Guard(GamePiece):
     """Guard Piece, can move 1 space in any direction within the palace"""
     def __init__(self, team):
+        """Init Guard with new type"""
         super().__init__(team)
+        self._type = "Guard"
 
     def __str__(self):
+        """Override print method to display gamepiece in terminal"""
         return colored("GD", self._team)
 
 
@@ -189,27 +225,36 @@ class Horse(GamePiece):
     jump units.
     """
     def __init__(self, team):
+        """Init Horse with new type"""
         super().__init__(team)
+        self._type = "Horse"
 
     def __str__(self):
+        """Override print method to display gamepiece in terminal"""
         return colored("HS", self._team)
 
 
 class Elephant(GamePiece):
     """Elephant piece, moves one step orthogonally and then two steps diagonally. Block by pieces, cannot jump."""
     def __init__(self, team):
+        """Init Elephant with new type"""
         super().__init__(team)
+        self._type = "Elephant"
 
     def __str__(self):
+        """Override print method to display gamepiece in terminal"""
         return colored("EL", self._team)
 
 
 class Chariot(GamePiece):
     """Chariot piece, moves in straight line, can move diagonally within palace"""
     def __init__(self, team):
+        """Init Chariot with new type"""
         super().__init__(team)
+        self._type = "Chariot"
 
     def __str__(self):
+        """Override print method to display gamepiece in terminal"""
         return colored("CH", self._team)
 
 
@@ -219,9 +264,12 @@ class Cannon(GamePiece):
     piece can be friendly or enemy. The jumped piece cannot be another cannon.
     """
     def __init__(self, team):
+        """Init Cannon with new type"""
         super().__init__(team)
+        self._type = "Cannon"
 
     def __str__(self):
+        """Override print method to display gamepiece in terminal"""
         return colored("CA", self._team)
 
 
@@ -230,9 +278,12 @@ class Soldier(GamePiece):
     Soldier piece. The Solider can move forward or sideways, but not backwards
     """
     def __init__(self, team):
+        """Init Soldier with new type"""
         super().__init__(team)
+        self._type = "Soldier"
 
     def __str__(self):
+        """Override print method to display gamepiece in terminal"""
         return colored("SD", self._team)
 
 
@@ -240,7 +291,8 @@ def main():
     """Main function to test out code"""
     game = JanggiGame()
     game.get_janggi_board().display_board()
-
+    board = game.get_janggi_board()
+    game.get_janggi_board().get_square('e2').valid_moves('e2',board)
 
 if __name__ == '__main__':
     main()
