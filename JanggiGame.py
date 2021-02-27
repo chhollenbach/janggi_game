@@ -9,8 +9,9 @@ from termcolor import colored
 
 class GameBoard:
     """
-    Class representing an empty gameboard. Can return itself, a list of squares in the palace, and display
-    itself in the terminal
+    Class representing an empty gameboard. The Gameboard is a dict of lists, and holds the various pieces in the game.
+    This class will not directly call/interact with any other classes, although GamePiece classes will be stored
+    in the various squares.
     """
     def __init__(self):
         """Init GameBoard Class with board and palace information"""
@@ -19,45 +20,60 @@ class GameBoard:
         self._red_palace = ['d1', 'e1', 'f1', 'd2', 'e2', 'f2', 'd3', 'e3', 'f3']
 
     def get_board(self):
-        """Return _board attribute"""
+        """Return the board, which is a dict of lists"""
         return self._board
 
     def get_palace(self, team):
-        """Return list of palace squares for a team"""
+        """Return list of palace squares for a, input team. Palaces squares are string locations"""
         if team == 'blue':
             return self._blue_palace
         else:
             return self._red_palace
 
     def display_board(self):
-        """Converts dict of lists to list of lists for accurate display of board"""
+        """Converts dict of lists to list of lists and prints vertically for accurate display of board in terminal"""
         display_list = []
         # Sort key values alphabetically into a list of lists
         for key, value in sorted(self._board.items()):
             display_list.append(value)
 
         # Print out list of lists vertically with column and row markers
-        print('  a  b  c  d  e  f  g  h  i')
+        print('   a  b  c  d  e  f  g  h  i')
         for col in range(10):
-            print(col + 1, end = ' ')
+            if col + 1 < 10:
+                print(col + 1, end='  ')
+            # adjust spacing for double digit row (10)
+            else:
+                print(col + 1, end=' ')
             for row in display_list:
-                print(row[col], end = ' ')
+                print(row[col], end=' ')
             print()
 
     def get_square(self, location):
-        """Return a specific square on the board"""
+        """
+        Return a specific square on the board at location (string input). Return value is either a GamePiece, a
+        string "__" denoting an empty square, or None, which represents the out of bounds area
+        """
         col = location[0]
         row = int(location[1:]) - 1
         # if square is off board, return None
-        try:
-            return_square = self._board[col][row]
-        except (KeyError, IndexError):
-            return_square = None
+        if row < 0 or row > 9 or col < 'a' or col > 'i':
+            return None
+        return_square = self._board[col][row]
         return return_square
+
+    def set_square(self, location, value):
+        """Set square at location (string input) to value (either empty string or gamepiece)"""
+        col = location[0]
+        row = int(location[1:]) - 1
+        self._board[col][row] = value
 
 
 class JanggiGame:
-    """Class implementation of Janggi. Drives gameplay, links together the GameBoard and GamePiece classes"""
+    """
+    Class implementation of Janggi. Drives gameplay, links together the GameBoard and GamePiece classes. Responsible for
+    high level game tasks, like setting the board, moving pieces, checking and changing the game status and player turn
+    """
     def __init__(self):
         """Initialize game. Sets up board and places pieces."""
         # Create Data Members
@@ -67,58 +83,51 @@ class JanggiGame:
 
         # Set up pieces of board - PROBABLY CAN FIGURE OUT A BETTER WAY TO SET THIS UP THAN HARD CODING ALL THIS
         # General
-        self.place_piece('e2', General('red'))
-        self.place_piece('e9', General('blue'))
+        self._janggi_board.set_square('e2', General('red'))
+        self._janggi_board.set_square('e9', General('blue'))
         # Guard
-        self.place_piece('d1', Guard('red'))
-        self.place_piece('f1', Guard('red'))
-        self.place_piece('d10', Guard('blue'))
-        self.place_piece('f10', Guard('blue'))
+        self._janggi_board.set_square('d1', Guard('red'))
+        self._janggi_board.set_square('f1', Guard('red'))
+        self._janggi_board.set_square('d10', Guard('blue'))
+        self._janggi_board.set_square('f10', Guard('blue'))
         # Horse
-        self.place_piece('c1', Horse('red'))
-        self.place_piece('h1', Horse('red'))
-        self.place_piece('c10', Horse('blue'))
-        self.place_piece('h10', Horse('blue'))
+        self._janggi_board.set_square('c1', Horse('red'))
+        self._janggi_board.set_square('h1', Horse('red'))
+        self._janggi_board.set_square('c10', Horse('blue'))
+        self._janggi_board.set_square('h10', Horse('blue'))
         # Elephant
-        self.place_piece('b1', Elephant('red'))
-        self.place_piece('g1', Elephant('red'))
-        self.place_piece('b10', Elephant('blue'))
-        self.place_piece('g10', Elephant('blue'))
+        self._janggi_board.set_square('b1', Elephant('red'))
+        self._janggi_board.set_square('g1', Elephant('red'))
+        self._janggi_board.set_square('b10', Elephant('blue'))
+        self._janggi_board.set_square('g10', Elephant('blue'))
         # Chariot
-        self.place_piece('a1', Chariot('red'))
-        self.place_piece('i1', Chariot('red'))
-        self.place_piece('a10', Chariot('blue'))
-        self.place_piece('i10', Chariot('blue'))
+        self._janggi_board.set_square('a1', Chariot('red'))
+        self._janggi_board.set_square('i1', Chariot('red'))
+        self._janggi_board.set_square('a10', Chariot('blue'))
+        self._janggi_board.set_square('i10', Chariot('blue'))
         # Cannon
-        self.place_piece('b3', Cannon('red'))
-        self.place_piece('h3', Cannon('red'))
-        self.place_piece('b8', Cannon('blue'))
-        self.place_piece('h8', Cannon('blue'))
+        self._janggi_board.set_square('b3', Cannon('red'))
+        self._janggi_board.set_square('h3', Cannon('red'))
+        self._janggi_board.set_square('b8', Cannon('blue'))
+        self._janggi_board.set_square('h8', Cannon('blue'))
         # Soldier
-        self.place_piece('a4', Soldier('red'))
-        self.place_piece('c4', Soldier('red'))
-        self.place_piece('e4', Soldier('red'))
-        self.place_piece('g4', Soldier('red'))
-        self.place_piece('i4', Soldier('red'))
-        self.place_piece('a7', Soldier('blue'))
-        self.place_piece('c7', Soldier('blue'))
-        self.place_piece('e7', Soldier('blue'))
-        self.place_piece('g7', Soldier('blue'))
-        self.place_piece('i7', Soldier('blue'))
-
-    def place_piece(self, location, piece):
-        """Places a GamePiece object on the board at a given location. Used to set up game"""
-        # Convert string location (e.g. 'b3') to column and row
-        col = location[0]
-        row = int(location[1:]) - 1
-        self._janggi_board.get_board()[col][row] = piece
+        self._janggi_board.set_square('a4', Soldier('red'))
+        self._janggi_board.set_square('c4', Soldier('red'))
+        self._janggi_board.set_square('e4', Soldier('red'))
+        self._janggi_board.set_square('g4', Soldier('red'))
+        self._janggi_board.set_square('i4', Soldier('red'))
+        self._janggi_board.set_square('a7', Soldier('blue'))
+        self._janggi_board.set_square('c7', Soldier('blue'))
+        self._janggi_board.set_square('e7', Soldier('blue'))
+        self._janggi_board.set_square('g7', Soldier('blue'))
+        self._janggi_board.set_square('i7', Soldier('blue'))
 
     def get_game_state(self):
-        """Return state of the game. Can be 'UNFINISHED', 'blue'_WON', or 'RED_WON' """
+        """Return state of the game. Can be 'UNFINISHED', 'BLUE'_WON', or 'RED_WON' """
         return self._game_state
 
     def get_janggi_board(self):
-        """Return instance of GameBoard for the game (aka _janggi_board object)"""
+        """Return instance of GameBoard for the game (aka GameBoard object)"""
         return self._janggi_board
 
     def get_player_turn(self):
@@ -132,48 +141,41 @@ class JanggiGame:
         else:
             self._player_turn = 'blue'
 
-    def remove_piece(self, location):
-        """Remove a piece at a location. Used during capturing process"""
-        # Convert string location (e.g. 'b3') to column and row
-        col = location[0]
-        row = int(location[1:]) - 1
-        self._janggi_board.get_board()[col][row] = '__'
-
     def is_in_check(self, team):
         """If the given team is in check, returns True, otherwise return False"""
         pass
 
     def make_move(self, location_a, location_b):
-        """Move a piece from location a to location b"""
-        # Convert string locations (e.g. 'b3') to column and row
-        a_col = location_a[0]
-        a_row = int(location_a[1:]) - 1
-        b_col = location_b[0]
-        b_row = int(location_b[1:]) - 1
-
-        # TODO: Check if move is valid
-
-        # If locations are the same, turn is passed
-        if location_a == location_b:
-            self.change_turn()
-            return True
-        # otherwise, move piece, set old square as 0
+        """
+        Move a piece from location a to location b. Locations are string inputs. Returns False if move is invalid
+        but otherwise moves piece, updates gamestate/player turn and returns true.
+        """
+        # get value at location_a
+        from_square = self._janggi_board.get_square(location_a)
+        # Check for validity of move
+        # Check that location_a is in game bounds, there is a friendly unit there, and game isn't over
+        if from_square == '__' or from_square is None or from_square.get_team() != self._player_turn or self._game_state != 'UNFINISHED':
+            return False
+        # check that location_b is in valid moves for unit at location_a
+        elif location_b not in from_square.valid_moves(location_a, self.get_janggi_board()):
+            return False
         else:
-            self._janggi_board.get_board()[b_col][b_row] = self._janggi_board.get_board()[a_col][a_row]
-            self._janggi_board.get_board()[a_col][a_row] = '__'
-
-        # TODO: Check for game_state change, remove any capture pieces (done via other methods)
+            # move piece, set old square as to empty string
+            self._janggi_board.set_square(location_b, from_square)
+            self._janggi_board.set_square(location_a, "__")
 
         # Change the turn
         self.change_turn()
 
         return True
 
-# TODO add return method for pieces that returns the diff of all squares able to move to
-
 
 class GamePiece:
-    """Generic GamePiece class, tracks the team of a piece"""
+    """
+    Parent GamePiece class, tracks the team and type of a piece. Is inherited by various classes representing the unique
+    pieces of Janggi. The child classes will contain the method valid_moves, which will list all spaces that a piece
+    can move to legally.
+    """
     def __init__(self, team):
         """Initialize GamePiece object with team (string) of piece and a piece type"""
         self._team = team
@@ -189,7 +191,9 @@ class GamePiece:
 
 
 class General(GamePiece):
-    """General Class. Can move 1 space in any direction within the palace. Goal is to checkmate the enemy General"""
+    """
+    General Class. Can move 1 space in any direction within the palace.
+    """
     def __init__(self, team):
         """Init General with new type"""
         super().__init__(team)
@@ -220,7 +224,9 @@ class General(GamePiece):
 
 
 class Guard(GamePiece):
-    """Guard Piece, can move 1 space in any direction within the palace"""
+    """
+    Guard Clas. Can move 1 space in any direction within the palace.
+    """
     def __init__(self, team):
         """Init Guard with new type"""
         super().__init__(team)
@@ -252,8 +258,7 @@ class Guard(GamePiece):
 
 class Horse(GamePiece):
     """
-    Horse piece, can move one step orthogonally and one step outward (exactly like a horse in Western chess). Cannot
-    jump units.
+    Horse Class. Can move one step orthogonally and one step diagonally outward. Cannot jump units.
     """
     def __init__(self, team):
         """Init Horse with new type"""
@@ -328,7 +333,9 @@ class Horse(GamePiece):
 
 
 class Elephant(GamePiece):
-    """Elephant piece, moves one step orthogonally and then two steps diagonally. Blocked by pieces, cannot jump."""
+    """
+    Elephant Class. Moves one step orthogonally and then two steps diagonally outwards. Cannot jump pieces.
+    """
     def __init__(self, team):
         """Init Elephant with new type"""
         super().__init__(team)
@@ -412,7 +419,9 @@ class Elephant(GamePiece):
 
 
 class Chariot(GamePiece):
-    """Chariot piece, moves in straight line, can move diagonally within palace"""
+    """
+    Chariot Class. Moves in an orthogonal line, and can move diagonally within palace.
+    """
     def __init__(self, team):
         """Init Chariot with new type"""
         super().__init__(team)
@@ -424,13 +433,67 @@ class Chariot(GamePiece):
 
     def valid_moves(self, location, gameboard):
         """Determines valid moves for the piece, given the starting location, and the state of the gameboard"""
-        pass
+        move_list = []
+        starting_col = location[0]
+        starting_row = int(location[1:])
+        palace_squares = gameboard.get_palace(self.get_team())
+
+        # Chariot moves in 4 orthogonal directions while outside palace, and 8 directions inside palace
+        for direction in ['up', 'right', 'down', 'left', 'upright', 'downright', 'downleft', 'upleft']:
+            stop_flag = False
+            last_col = starting_col
+            last_row = starting_row
+            # all moves in a line up to edge of board/ally piece/onto enemy piece are valid
+            # if in palace, can move diagonally to edge of palace as well
+            if direction in ['upright', 'downright', 'downleft', 'upleft'] and location not in gameboard.get_palace(palace_squares):
+                # if chariot is not in palace, it can't move diagonally
+                stop_flag = True
+            while stop_flag is False:
+                if direction == 'up':
+                    next_location = chr(ord(last_col)) + str(last_row + 1)
+                elif direction == 'right':
+                    next_location = chr(ord(last_col) + 1) + str(last_row)
+                elif direction == 'down':
+                    next_location = chr(ord(last_col)) + str(last_row - 1)
+                elif direction == 'left':
+                    next_location = chr(ord(last_col) - 1) + str(last_row)
+                elif direction == 'upright':
+                    next_location = chr(ord(last_col) + 1) + str(last_row + 1)
+                elif direction == 'downright':
+                    next_location = chr(ord(last_col) + 1) + str(last_row - 1)
+                elif direction == 'downleft':
+                    next_location = chr(ord(last_col) - 1) + str(last_row - 1)
+                elif direction == 'upleft':
+                    next_location = chr(ord(last_col) - 1) + str(last_row + 1)
+                next_square = gameboard.get_square(next_location)
+                # if next square is off board, stop
+                if next_square is None:
+                    stop_flag = True
+                # if moving diagonally, and next square is outside the palace, stop
+                elif direction in ['upright', 'downright', 'downleft', 'upleft'] and next_location not in palace_squares:
+                    stop_flag = True
+                # if next square is empty, can move there
+                elif next_square == '__':
+                    move_list.append(next_location)
+                # if next square is ally, stop
+                elif next_square.get_team() == self.get_team():
+                    stop_flag = True
+                # if next square is enemy, can move there but stop after
+                else:
+                    move_list.append(next_location)
+                    stop_flag = True
+                # advance last col/row info to next square for next iteration
+                last_col = next_location[0]
+                last_row = int(next_location[1:])
+
+        return set(move_list)
 
 
 class Cannon(GamePiece):
     """
-    Cannon piece. The cannon can move any number of spaces in a line, so long as it jumps one piece to do so. The jumped
-    piece can be friendly or enemy. The jumped piece cannot be another cannon.
+    Cannon Class. The cannon can move any number of spaces in an orthonoal line, so long as it jumps one piece to do so.
+    The jumped piece can be friendly or enemy. The jumped piece cannot be another cannon. The cannon cannot capture an
+    enemy cannon. The cannon can move diagonally within the palace (like the Chariot)
     """
     def __init__(self, team):
         """Init Cannon with new type"""
@@ -443,12 +506,81 @@ class Cannon(GamePiece):
 
     def valid_moves(self, location, gameboard):
         """Determines valid moves for the piece, given the starting location, and the state of the gameboard"""
-        pass
+        move_list = []
+        starting_col = location[0]
+        starting_row = int(location[1:])
+        palace_squares = gameboard.get_palace(self.get_team())
+
+        # Cannon moves in 4 orthogonal directions while outside palace, and 8 directions inside palace. It must jump a unit
+        for direction in ['up', 'right', 'down', 'left', 'upright', 'downright', 'downleft', 'upleft']:
+            stop_flag = False
+            unit_counter = 0
+            last_col = starting_col
+            last_row = starting_row
+            # all moves in a line up to edge of board/ally piece/onto enemy piece are valid
+            # if in palace, can move diagonally to edge of palace as well
+            if direction in ['upright', 'downright', 'downleft', 'upleft'] and location not in gameboard.get_palace(
+                    palace_squares):
+                # if cannon is not in palace, it can't move diagonally
+                stop_flag = True
+            while stop_flag is False:
+                # Set next location based on direction
+                if direction == 'up':
+                    next_location = chr(ord(last_col)) + str(last_row + 1)
+                elif direction == 'right':
+                    next_location = chr(ord(last_col) + 1) + str(last_row)
+                elif direction == 'down':
+                    next_location = chr(ord(last_col)) + str(last_row - 1)
+                elif direction == 'left':
+                    next_location = chr(ord(last_col) - 1) + str(last_row)
+                elif direction == 'upright':
+                    next_location = chr(ord(last_col) + 1) + str(last_row + 1)
+                elif direction == 'downright':
+                    next_location = chr(ord(last_col) + 1) + str(last_row - 1)
+                elif direction == 'downleft':
+                    next_location = chr(ord(last_col) - 1) + str(last_row - 1)
+                elif direction == 'upleft':
+                    next_location = chr(ord(last_col) - 1) + str(last_row + 1)
+                next_square = gameboard.get_square(next_location)
+
+                # add moves to move_list if they are valid
+                # if next square is off board, stop
+                if next_square is None:
+                    stop_flag = True
+                # if the next unit is a cannon, stop, cannot jump or capture cannon
+                elif next_square != "__" and next_square.get_type() == 'Cannon':
+                    stop_flag = True
+                # if moving diagonally, and next square is outside the palace, stop
+                elif direction in ['upright', 'downright', 'downleft', 'upleft'] and next_location not in palace_squares:
+                    stop_flag = True
+                # if next square is empty, can move there so long as there is one piece in the way
+                elif next_square == '__' and unit_counter == 1:
+                    move_list.append(next_location)
+                # if next square is empty but we haven't passed a unit, move to next iteration
+                # adding this condition so next if condition methods don't get called on strings
+                elif next_square == '__' and unit_counter != 1:
+                    pass
+                # if next square is ally, and we've jumped a unit, stop
+                elif next_square.get_team() == self.get_team() and unit_counter == 1:
+                    stop_flag = True
+                # if next square is enemy, and we've jumped a unit, can move to space and then stop
+                elif next_square.get_team() != self.get_team() and unit_counter == 1:
+                    move_list.append(next_location)
+                    stop_flag = True
+                # if next square is unit increment unit counter but don't add space to move pool
+                elif next_square is not None and next_square != '__' and next_square.get_type() != 'Cannon':
+                    unit_counter += 1
+
+                # advance last col/row info to next square for next iteration
+                last_col = next_location[0]
+                last_row = int(next_location[1:])
+
+        return set(move_list)
 
 
 class Soldier(GamePiece):
     """
-    Soldier piece. The Solider can move forward or sideways, but not backwards
+    Soldier Class. The Solider can move forward or sideways, but not backwards.
     """
     def __init__(self, team):
         """Init Soldier with new type"""
@@ -487,9 +619,6 @@ def main():
     """Main function to test out code"""
     game = JanggiGame()
     game.get_janggi_board().display_board()
-    # Test movement
-    board = game.get_janggi_board()
-    print(game.get_janggi_board().get_square('a4').valid_moves('a4', board))
 
 
 if __name__ == '__main__':
