@@ -118,7 +118,7 @@ game status and end the game.
 
 # Using external package to add color to terminal print in order to see red/blue side better
 # Not used for any functionality required in README
-from termcolor import colored
+# from termcolor import colored
 
 
 class GameBoard:
@@ -443,7 +443,9 @@ class General(GamePiece):
 
     def __str__(self):
         """Override print method to display gamepiece in terminal"""
-        return colored("GN", self._team)
+        # If not importing colored module, use normal print
+        return "GN"
+        # return colored("GN", self._team)
 
     def valid_moves(self, location, gameboard):
         """Determines valid moves for the piece, given the starting location, and the state of the gameboard"""
@@ -476,7 +478,9 @@ class Guard(GamePiece):
 
     def __str__(self):
         """Override print method to display gamepiece in terminal"""
-        return colored("GD", self._team)
+        # If not importing colored module, use normal print
+        return "GD"
+        # return colored("GD", self._team)
 
     def valid_moves(self, location, gameboard):
         """Determines valid moves for the piece, given the starting location, and the state of the gameboard"""
@@ -509,7 +513,9 @@ class Horse(GamePiece):
 
     def __str__(self):
         """Override print method to display gamepiece in terminal"""
-        return colored("HS", self._team)
+        # If not importing colored module, use normal print
+        return "HS"
+        # return colored("HS", self._team)
 
     def valid_moves(self, location, gameboard):
         """Determines valid moves for the piece, given the starting location, and the state of the gameboard"""
@@ -585,7 +591,9 @@ class Elephant(GamePiece):
 
     def __str__(self):
         """Override print method to display gamepiece in terminal"""
-        return colored("EL", self._team)
+        # If not importing colored module, use normal print
+        return "EL"
+        # return colored("EL", self._team)
 
     def valid_moves(self, location, gameboard):
         """Determines valid moves for the piece, given the starting location, and the state of the gameboard"""
@@ -671,7 +679,9 @@ class Chariot(GamePiece):
 
     def __str__(self):
         """Override print method to display gamepiece in terminal"""
-        return colored("CH", self._team)
+        # If not importing colored module, use normal print
+        return "CH"
+        # return colored("CH", self._team)
 
     def valid_moves(self, location, gameboard):
         """Determines valid moves for the piece, given the starting location, and the state of the gameboard"""
@@ -744,7 +754,9 @@ class Cannon(GamePiece):
 
     def __str__(self):
         """Override print method to display gamepiece in terminal"""
-        return colored("CA", self._team)
+        # If not importing colored module, use normal print
+        return "CA"
+        #return colored("CA", self._team)
 
     def valid_moves(self, location, gameboard):
         """Determines valid moves for the piece, given the starting location, and the state of the gameboard"""
@@ -831,7 +843,9 @@ class Soldier(GamePiece):
 
     def __str__(self):
         """Override print method to display gamepiece in terminal"""
-        return colored("SD", self._team)
+        # If not importing colored module, use normal print
+        return "SD"
+        # return colored("SD", self._team)
 
     def valid_moves(self, location, gameboard):
         """Determines valid moves for the piece, given the starting location, and the state of the gameboard"""
