@@ -2,8 +2,23 @@
 # Date: 2/22/2021
 # A program that implements Classes to play the board game "Janggi" aka Korean chess
 
+
+# DETAILED TEXT DESCRIPTIONS OF HOW TO HANDLE THE SCENARIOS
+# Initializing the board
+# Determining how to represent pieces  at a given location on the board
+# Determining how to validate a given move according to the rules for each piece, turn taking and other game rules.
+# Modifying the board state after each move.
+# Determining how to track which player's turn it is to play right now.
+# Determining how to detect the checkmate scenario.
+# Determining which player has won and also figuring out when to check that.
+
+
+
+
+
+
 # Using external package to add color to terminal print in order to see red/blue side better
-# Will Remove/comment out before uploading to gradescope
+# Not used for any functionality required in README
 from termcolor import colored
 
 
@@ -14,7 +29,7 @@ class GameBoard:
     in the various squares.
     """
     def __init__(self):
-        """Init GameBoard Class with board and palace information"""
+        """Init GameBoard Class with board and palace information. The board is a dict of lists."""
         self._board = {x: list('__' for _ in range(10)) for x in ('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i')}
         self._blue_palace = ['d10', 'e10', 'f10', 'd9', 'e9', 'f9', 'd8', 'e8', 'f8']
         self._red_palace = ['d1', 'e1', 'f1', 'd2', 'e2', 'f2', 'd3', 'e3', 'f3']
@@ -75,11 +90,13 @@ class JanggiGame:
     high level game tasks, like setting the board, moving pieces, checking and changing the game status and player turn
     """
     def __init__(self):
-        """Initialize game. Sets up board and places pieces."""
+        """Initialize game. Sets up board and places pieces. Tracks game state, board, turn, and general location"""
         # Create Data Members
         self._game_state = 'UNFINISHED'
         self._janggi_board = GameBoard()
         self._player_turn = 'blue'
+        self._blue_general = 'e9'
+        self._red_general = 'e2'
 
         # Set up pieces of board - PROBABLY CAN FIGURE OUT A BETTER WAY TO SET THIS UP THAN HARD CODING ALL THIS
         # General
@@ -126,6 +143,10 @@ class JanggiGame:
         """Return state of the game. Can be 'UNFINISHED', 'BLUE'_WON', or 'RED_WON' """
         return self._game_state
 
+    def set_game_state(self, new_game_state):
+        """Update the game state with a new_game_state. Expected value is a string for BLUE_WON or RED_WON"""
+        self._game_state = new_game_state
+
     def get_janggi_board(self):
         """Return instance of GameBoard for the game (aka GameBoard object)"""
         return self._janggi_board
@@ -141,32 +162,149 @@ class JanggiGame:
         else:
             self._player_turn = 'blue'
 
+    def change_general_location(self, new_location, team):
+        """Update tracking location of general. Used in make_move method. DOES NOT ACTUALLY MOVE GENERAL"""
+        if team == 'blue':
+            self._blue_general = new_location
+        else:
+            self._red_general = new_location
+
+    def get_general_loc(self, team):
+        """Return location of general for a team"""
+        if team == 'blue':
+            return self._blue_general
+        else:
+            return self._red_general
+
+    def get_opposite_team(self):
+        """Return the opposite team of the player turn."""
+        if self.get_player_turn() == 'red':
+            return 'blue'
+        else:
+            return 'red'
+
+    def get_all_enemy_moves(self, team):
+        """
+        Determine all possible moves of enemy. Used for check/mate logic. Returns set of all move locations for
+        opposing team input. Team input should be a string, 'blue' or 'red'
+        """
+        enemy_move_set = set()
+        for key, value in self._janggi_board.get_board().items():
+            row = 1
+            for square in value:
+                if square != "__" and square.get_team() != team:
+                    location = key + str(row)
+                    moves = square.valid_moves(location, self.get_janggi_board())
+                    enemy_move_set.update(moves)
+                row += 1
+
+        return enemy_move_set
+
     def is_in_check(self, team):
         """If the given team is in check, returns True, otherwise return False"""
-        pass
+        enemy_move_set = self.get_all_enemy_moves(team)
+        if team == 'blue' and self._blue_general in enemy_move_set:
+            return True
+        elif team == 'red' and self._red_general in enemy_move_set:
+            return True
+        else:
+            return False
+
+    def is_in_checkmate(self, team):
+        """If a given team is in checkmate, returns True, otherwise returns False"""
+        # loop through board. for each ally piece, get moves, try move, check if still in check. if no, revert move
+        # and return false. if yes, revert move and continue to next move
+        # Loop through key, value of board
+        for key, value in self._janggi_board.get_board().items():
+            # Keep track of row index
+            row = 1
+            # square is either "__" or a gamepiece
+            for square in value:
+                if square != "__" and square.get_team() == team:
+                    location = key + str(row)
+                    moves = square.valid_moves(location, self.get_janggi_board())
+                    # Loop through all moves for a gamepiece
+                    for move in moves:
+                        # Record contents of move location for roll back
+                        new_square_value = self.get_janggi_board().get_square(move)
+                        # Move gamepiece to new move location
+                        self.get_janggi_board().set_square(move, square)
+                        if square.get_type() == "General":
+                            self.change_general_location(move, team)
+                        # Check if still in check
+                        check_value = self.is_in_check(team)
+                        # Roll back move
+                        self.get_janggi_board().set_square(move, new_square_value)
+                        self.get_janggi_board().set_square(location, square)
+                        if square.get_type() == "General":
+                            self.change_general_location(location, team)
+                        if check_value is False:
+                            # If not in check, team is not in checkmate. return False
+                            return False
+                row += 1
+
+        # If every move still leaves team in check, team is in check mate, return True
+        return True
 
     def make_move(self, location_a, location_b):
         """
         Move a piece from location a to location b. Locations are string inputs. Returns False if move is invalid
         but otherwise moves piece, updates gamestate/player turn and returns true.
         """
-        # get value at location_a
+        # get value at location_a and location_b, and location of general
+        # the latter two are used to roll the game back if necessary
         from_square = self._janggi_board.get_square(location_a)
+        to_square = self._janggi_board.get_square(location_b)
+        general_location = self.get_general_loc(self.get_player_turn())
+
+        # Pass turn if location_a and location_b are the same, and the player isn't in check
+        player_in_check_at_beginning_of_turn = self.is_in_check(self._player_turn)
+        if location_a == location_b and player_in_check_at_beginning_of_turn is False:
+            self.change_turn()
+            return True
         # Check for validity of move
         # Check that location_a is in game bounds, there is a friendly unit there, and game isn't over
-        if from_square == '__' or from_square is None or from_square.get_team() != self._player_turn or self._game_state != 'UNFINISHED':
+        elif from_square == '__' or from_square is None or from_square.get_team() != self._player_turn or self._game_state != 'UNFINISHED':
             return False
         # check that location_b is in valid moves for unit at location_a
         elif location_b not in from_square.valid_moves(location_a, self.get_janggi_board()):
             return False
         else:
-            # move piece, set old square as to empty string
+            # Move piece, set old square to empty string
+            # Also update location of general if general moved
+            if from_square.get_type() == "General":
+                self.change_general_location(location_b, self.get_player_turn())
             self._janggi_board.set_square(location_b, from_square)
             self._janggi_board.set_square(location_a, "__")
 
-        # Change the turn
-        self.change_turn()
+            # Insure that player does not end their turn in check
+            # If the player does end their turn in check, we need to roll the move back and return False
+            # A player ends their turn in check if they move into check (invalid) or do not move out of check if placed
+            # into it by the enemy in the previous turn
+            # We make the move first so that we can check all enemy moves after player move, as player move can effect
+            # enemy move possibilities
+            player_in_check_after_move = self.is_in_check(self._player_turn)
+            if player_in_check_after_move is True:
+                if from_square.get_type() == "General":
+                    self.change_general_location(general_location, self.get_player_turn())
+                self._janggi_board.set_square(location_b, to_square)
+                self._janggi_board.set_square(location_a, from_square)
+                return False
 
+        # If move put opposing player in check, check for check mate
+        # If check mate found, update game state and return True
+        opposing_player_in_check = self.is_in_check(self.get_opposite_team())
+        if opposing_player_in_check is True:
+            opposing_player_in_checkmate = self.is_in_checkmate(self.get_opposite_team())
+            if opposing_player_in_checkmate is True:
+                if self.get_player_turn() == 'red':
+                    self.set_game_state('RED_WON')
+                else:
+                    self.set_game_state('BLUE_WON')
+                return True
+
+        # Change the turn and return True to end turn
+        self.change_turn()
         return True
 
 
@@ -285,7 +423,7 @@ class Horse(GamePiece):
                     gameboard.get_square(move_1) == '__' or
                     gameboard.get_square(move_1).get_team() != self.get_team()):
                 move_list.append(move_1)
-            if gameboard.get_square(move_1) is not None and (
+            if gameboard.get_square(move_2) is not None and (
                     gameboard.get_square(move_2) == '__' or
                     gameboard.get_square(move_2).get_team() != self.get_team()):
                 move_list.append(move_2)
@@ -298,7 +436,7 @@ class Horse(GamePiece):
                     gameboard.get_square(move_1) == '__' or
                     gameboard.get_square(move_1).get_team() != self.get_team()):
                 move_list.append(move_1)
-            if gameboard.get_square(move_1) is not None and (
+            if gameboard.get_square(move_2) is not None and (
                     gameboard.get_square(move_2) == '__' or
                     gameboard.get_square(move_2).get_team() != self.get_team()):
                 move_list.append(move_2)
@@ -311,7 +449,7 @@ class Horse(GamePiece):
                     gameboard.get_square(move_1) == '__' or
                     gameboard.get_square(move_1).get_team() != self.get_team()):
                 move_list.append(move_1)
-            if gameboard.get_square(move_1) is not None and (
+            if gameboard.get_square(move_2) is not None and (
                     gameboard.get_square(move_2) == '__' or
                     gameboard.get_square(move_2).get_team() != self.get_team()):
                 move_list.append(move_2)
@@ -324,7 +462,7 @@ class Horse(GamePiece):
                     gameboard.get_square(move_1) == '__' or
                     gameboard.get_square(move_1).get_team() != self.get_team()):
                 move_list.append(move_1)
-            if gameboard.get_square(move_1) is not None and (
+            if gameboard.get_square(move_2) is not None and (
                     gameboard.get_square(move_2) == '__' or
                     gameboard.get_square(move_2).get_team() != self.get_team()):
                 move_list.append(move_2)
@@ -463,7 +601,7 @@ class Chariot(GamePiece):
                     next_location = chr(ord(last_col) + 1) + str(last_row - 1)
                 elif direction == 'downleft':
                     next_location = chr(ord(last_col) - 1) + str(last_row - 1)
-                elif direction == 'upleft':
+                else:
                     next_location = chr(ord(last_col) - 1) + str(last_row + 1)
                 next_square = gameboard.get_square(next_location)
                 # if next square is off board, stop
@@ -539,7 +677,7 @@ class Cannon(GamePiece):
                     next_location = chr(ord(last_col) + 1) + str(last_row - 1)
                 elif direction == 'downleft':
                     next_location = chr(ord(last_col) - 1) + str(last_row - 1)
-                elif direction == 'upleft':
+                else:
                     next_location = chr(ord(last_col) - 1) + str(last_row + 1)
                 next_square = gameboard.get_square(next_location)
 
@@ -618,7 +756,15 @@ class Soldier(GamePiece):
 def main():
     """Main function to test out code"""
     game = JanggiGame()
-    game.get_janggi_board().display_board()
+    while game.get_game_state() == 'UNFINISHED':
+        game.get_janggi_board().display_board()
+        turn = game.get_player_turn().upper()
+        from_location, to_location = input(turn + " " + "Please make your move: ").split()
+        move = game.make_move(from_location, to_location)
+        if move is False:
+            print("Invalid move, please make a valid move")
+    print('\n'*10)
+    print(game.get_game_state())
 
 
 if __name__ == '__main__':
