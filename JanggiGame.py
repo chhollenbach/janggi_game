@@ -2,20 +2,119 @@
 # Date: 2/22/2021
 # A program that implements Classes to play the board game "Janggi" aka Korean chess
 
-
-# DETAILED TEXT DESCRIPTIONS OF HOW TO HANDLE THE SCENARIOS
+###############################################################################################
+################# DETAILED TEXT DESCRIPTIONS OF HOW TO HANDLE THE SCENARIOS ###################
 # Initializing the board
-# Determining how to represent pieces  at a given location on the board
+"""
+The board is initialized as a dict of lists. Each key in the dictionary corresponds to the letter/column of a location,
+and key maps to a list of length 10 (the actual squares on the board). Thus location 'b4' would be the 4th value in the
+list associated with the key 'b'. The gameboard is initialized as its own class, and an instance of that class is
+created when the JanggiGame class gets initialized. The gameboard class, in addition to storing the dict of lists itself
+as a data member, also tracks locations that are considered palaces (simply as a list of string locations). In
+JanggiGame, GamePiece classes (see next scenario) are hardcoded into their starting positions on the dict of lists.
+
+1. for key in 'a'-'i', generate a list of length 10
+2. When JanggiGame is called, GamePiece instances are hardcoded into their starting positions in the above dict of lists
+"""
+# Determining how to represent pieces at a given location on the board
+"""
+Pieces are represented by classes. I made a GamePiece parent class, and then created separate child classes for each
+type of piece (General, Horse, etc.) that inherit the parent class. The parent class stores the team/type of the piece
+and has some basic getter methods, and the child classes have a valid_moves method that returns all possible moves for
+a given piece type, given its location and the state of the gameboard. When JanggiGame is initialized, it also places
+instances of each piece at the appropriate location on the Gameboard.
+
+1. Create child classes (each unique type of piece) that inherit from the parent GamePiece class
+2. Store instances of these classes within the dict of lists that represents the board (e.g. at key ='e' and index = 8, 
+which is the 9th square, store instance of General class for the blue team.)
+"""
 # Determining how to validate a given move according to the rules for each piece, turn taking and other game rules.
+"""
+Each child class of GamePiece contains a method called valid_moves. This method takes the current gameboard, and the 
+location of the gamepiece as parameters. Given that info, every location a gamepiece can move to is generated according 
+to its movement rules. For pieces like the general, guard, and soldier, which only move one square, this is fairly
+simple, as there are a limited number of squares, so each square is examined to make sure it is on the board, and either
+empty or occupied by an enemy. The General and guards are also checked to make sure the location is in the palace. For 
+horses and elephants, there are still a limited number of movement squares, but squares along the way are examined to 
+insure there are no blocking pieces, since these units can't jump. For the cannon and the chariot, we loop through 
+squares in a line to determine where the first blocking piece is for the chariot (either before a friendly piece, or at
+an enemy piece, or the edge of the board), or to determine if there is a jumping piece and where the subsequent blocking
+piece is for the cannon.
+
+In the make_move method of JanggiGame, validation is performed to insure that the piece being selected belongs to the 
+player who's turn it is (player turn is a data member in JanggiGame). There are also checks in that method to make sure
+that a player's move does not leave them in check, which would be an illegal move.
+
+1. for each gamepiece child class, have a valid_moves method
+2. for each direction the piece can move in (depends on piece/in palace or not), determine if subsequent square/move
+is empty, occupied by friendly piece, or occupied by enemy
+3. Depending on the gamepiece, either add square to move list, stop going in that direction, or continue onto next
+square in that direction (e.g. chariot would stop at the first ally piece, a cannon can jump the first non-cannon ally 
+piece, but soldier only needs to check 1 square out)
+"""
 # Modifying the board state after each move.
+"""
+There is a method in the GameBoard class called set_square(). This method takes a location and a value (expected to 
+either be a gamepiece instance or a string "__" which I use to represent an empty square. The method assigns the value
+to the given location in the dict of lists. In my make_move method, after validating the move, I call this method twice.
+Once to move the piece to the new location, and once to set the old location as empty.
+
+1. Validate move is legal
+2. call set_square on location to move to, setting it's value as the value of the square being moved from
+3. call set_square on location being moved from, setting it's value as empty, aka this string "__"
+4. If piece being moved is a general update data member in JanggiGame to track the general's location
+"""
 # Determining how to track which player's turn it is to play right now.
+"""
+The JanggiGame has a data member called player_turn. This is either 'red' or 'blue'. There is another method called
+change_turn that simply flips this from 'red' -> 'blue' (if player_turn == 'red' then player_turn = 'blue' else player_turn = 'red')
+or vice versa. In the make_move method, after a move is  validated, the board is updated, and any potential checkmate is
+evaluated, the change_turn method is called to change the turn of the player. This data member is used at the beginning
+of the make_move method to determine if the piece being moved belongs to the player who's turn it is (pieces have a data
+member for which team they belong to).
+
+1. Initialize game with 'blue' as the player turn
+2. at the beginning of the make_move method, check that piece being moved belongs to player whos turn it is
+3. after each valid move, change the player turn to the other player
+"""
 # Determining how to detect the checkmate scenario.
+"""
+This works in two parts. Part 1 is detecting check scenarios. I have a method called get_all_enemy_moves that takes a
+team as a parameter. This method loops through the boardm and for all pieces on teh opposing team, adds the pieces moves
+to a growing set. Then the is_in_check method simply determines if the teams general location (stored as a data member
+in the JanggiGame class) is in the list of all enemy moves. If yes, then team is in check, otherwise team is not in 
+check.
+
+Part 2 occurs whenever a player's move puts the enemy into check. When this happens, the is_in_checkmate method is
+called. This method will iterate through the board, and for each piece belonging to the player, for each move available
+to that piece, make the move, see if the player is still in check, the roll the move back. If at any point the player
+is NOT in check, we return False, as they have some move that will end the check, but if we check every piece they have
+and no move will break the check, we return True as they are in checkmate.
+
+Written out in pseudocode, this looks like:
+1. Get all available spaces enemy can move to
+2. Check if own team general in list of enemy move spaces
+3. If yes, for every piece on own team, for every move for every piece, make the move
+4. Get all available spaces enemy can move to after possible move made
+5. Check if own team general in list of enemy move spaces
+6. Roll the possible move back
+7. If the own team general was still in check, repeat steps 3-6 for all pieces on own team
+8. If own team general at any point is not in check anymore after possible move, there is no checkmate
+9. If after every piece and every move is evaluated, the general never left, check, there is a checkmate
+"""
 # Determining which player has won and also figuring out when to check that.
+"""
+At the end of the make_move method, after the move is made, a the opposing player is examed to determine if they are in
+check. If they are, they are evaluated to see if they are in check mate (see above description for more technical 
+details on how this is done). If they are in checkmate, the the player who just moved has won, so we can update the 
+game status and end the game.
 
-
-
-
-
+1. make valid move
+2. evaluate if enemy in check
+3. if yes, evaluate if enemy in checkmate
+4. if yes, change game state and end game
+"""
+###############################################################################################
 
 # Using external package to add color to terminal print in order to see red/blue side better
 # Not used for any functionality required in README
@@ -39,11 +138,16 @@ class GameBoard:
         return self._board
 
     def get_palace(self, team):
-        """Return list of palace squares for a, input team. Palaces squares are string locations"""
+        """Return list of palace squares for an input team. Palaces squares are string locations"""
         if team == 'blue':
             return self._blue_palace
         else:
             return self._red_palace
+
+    def get_both_palaces(self):
+        """Return list of all palace squares on the board. Palaces squares are string locations"""
+        all_palace_squares = self._red_palace + self._blue_palace
+        return all_palace_squares
 
     def display_board(self):
         """Converts dict of lists to list of lists and prints vertically for accurate display of board in terminal"""
@@ -574,7 +678,7 @@ class Chariot(GamePiece):
         move_list = []
         starting_col = location[0]
         starting_row = int(location[1:])
-        palace_squares = gameboard.get_palace(self.get_team())
+        palace_squares = gameboard.get_both_palaces()
 
         # Chariot moves in 4 orthogonal directions while outside palace, and 8 directions inside palace
         for direction in ['up', 'right', 'down', 'left', 'upright', 'downright', 'downleft', 'upleft']:
@@ -647,7 +751,7 @@ class Cannon(GamePiece):
         move_list = []
         starting_col = location[0]
         starting_row = int(location[1:])
-        palace_squares = gameboard.get_palace(self.get_team())
+        palace_squares = gameboard.get_both_palaces()
 
         # Cannon moves in 4 orthogonal directions while outside palace, and 8 directions inside palace. It must jump a unit
         for direction in ['up', 'right', 'down', 'left', 'upright', 'downright', 'downleft', 'upleft']:
@@ -734,18 +838,35 @@ class Soldier(GamePiece):
         move_list = []
         starting_col = location[0]
         starting_row = int(location[1:])
+        # get enemy team palace squares for diagonal movement validation
+        team = self.get_team()
+        if team == 'red':
+            enemy_team = 'blue'
+        else:
+            enemy_team = 'red'
+        palace_squares = gameboard.get_palace(enemy_team)
 
-        # Create 3 possible moves, forward movement depending on team
+        # Create 5 possible moves, forward movement depending on team
         move_sideways_1 = chr(ord(starting_col) - 1) + str(starting_row)
         move_sidweays_2 = chr(ord(starting_col) + 1) + str(starting_row)
         if self.get_team() == 'blue':
             move_forward = chr(ord(starting_col)) + str(starting_row - 1)
+            move_diag_1 = chr(ord(starting_col) + 1) + str(starting_row - 1)
+            move_diag_2 = chr(ord(starting_col) - 1) + str(starting_row - 1)
         else:
             move_forward = chr(ord(starting_col)) + str(starting_row + 1)
+            move_diag_1 = chr(ord(starting_col) + 1) + str(starting_row + 1)
+            move_diag_2 = chr(ord(starting_col) - 1) + str(starting_row + 1)
 
         # check that move is not off the board/onto a friendly piece
         for move in [move_sideways_1, move_sidweays_2, move_forward]:
             if gameboard.get_square(move) is not None and (
+                        gameboard.get_square(move) == '__' or
+                        gameboard.get_square(move).get_team() != self.get_team()):
+                move_list.append(move)
+        # Check diagonal moves for being in the palace
+        for move in [move_diag_1, move_diag_2]:
+            if gameboard.get_square(move) is not None and move in palace_squares and (
                         gameboard.get_square(move) == '__' or
                         gameboard.get_square(move).get_team() != self.get_team()):
                 move_list.append(move)
