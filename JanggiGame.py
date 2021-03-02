@@ -118,7 +118,7 @@ game status and end the game.
 
 # Using external package to add color to terminal print in order to see red/blue side better
 # Not used for any functionality required in README
-# from termcolor import colored
+#from termcolor import colored
 
 
 class GameBoard:
@@ -446,7 +446,7 @@ class General(GamePiece):
         """Override print method to display gamepiece in terminal"""
         # If not importing colored module, use normal print
         return "GN"
-        # return colored("GN", self._team)
+        #return colored("GN", self._team)
 
     def valid_moves(self, location, gameboard):
         """Determines valid moves for the piece, given the starting location, and the state of the gameboard"""
@@ -481,7 +481,7 @@ class Guard(GamePiece):
         """Override print method to display gamepiece in terminal"""
         # If not importing colored module, use normal print
         return "GD"
-        # return colored("GD", self._team)
+        #return colored("GD", self._team)
 
     def valid_moves(self, location, gameboard):
         """Determines valid moves for the piece, given the starting location, and the state of the gameboard"""
@@ -516,7 +516,7 @@ class Horse(GamePiece):
         """Override print method to display gamepiece in terminal"""
         # If not importing colored module, use normal print
         return "HS"
-        # return colored("HS", self._team)
+        #return colored("HS", self._team)
 
     def valid_moves(self, location, gameboard):
         """Determines valid moves for the piece, given the starting location, and the state of the gameboard"""
@@ -594,7 +594,7 @@ class Elephant(GamePiece):
         """Override print method to display gamepiece in terminal"""
         # If not importing colored module, use normal print
         return "EL"
-        # return colored("EL", self._team)
+        #return colored("EL", self._team)
 
     def valid_moves(self, location, gameboard):
         """Determines valid moves for the piece, given the starting location, and the state of the gameboard"""
@@ -645,7 +645,7 @@ class Elephant(GamePiece):
                         gameboard.get_square(move).get_team() != self.get_team()):
                     move_list.append(move)
             if gameboard.get_square(chr(ord(starting_col) - 1) + str(starting_row + 2)) == '__':
-                move = chr(ord(starting_col) - 2) + str(starting_row - 3)
+                move = chr(ord(starting_col) - 2) + str(starting_row + 3)
                 if gameboard.get_square(move) is not None and (
                         gameboard.get_square(move) == '__' or
                         gameboard.get_square(move).get_team() != self.get_team()):
@@ -682,7 +682,7 @@ class Chariot(GamePiece):
         """Override print method to display gamepiece in terminal"""
         # If not importing colored module, use normal print
         return "CH"
-        # return colored("CH", self._team)
+        #return colored("CH", self._team)
 
     def valid_moves(self, location, gameboard):
         """Determines valid moves for the piece, given the starting location, and the state of the gameboard"""
@@ -846,7 +846,7 @@ class Soldier(GamePiece):
         """Override print method to display gamepiece in terminal"""
         # If not importing colored module, use normal print
         return "SD"
-        # return colored("SD", self._team)
+        #return colored("SD", self._team)
 
     def valid_moves(self, location, gameboard):
         """Determines valid moves for the piece, given the starting location, and the state of the gameboard"""
