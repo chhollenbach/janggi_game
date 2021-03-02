@@ -355,6 +355,7 @@ class JanggiGame:
         Move a piece from location a to location b. Locations are string inputs. Returns False if move is invalid
         but otherwise moves piece, updates gamestate/player turn and returns true.
         """
+        print("Attempting: ", location_a, "->", location_b)
         # get value at location_a and location_b, and location of general
         # the latter two are used to roll the game back if necessary
         from_square = self._janggi_board.get_square(location_a)
