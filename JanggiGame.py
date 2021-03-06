@@ -116,10 +116,6 @@ game status and end the game.
 """
 ###############################################################################################
 
-# Using external package to add color to terminal print in order to see red/blue side better
-# Not used for any functionality required in README
-#from termcolor import colored
-
 
 class GameBoard:
     """
@@ -132,6 +128,8 @@ class GameBoard:
         self._board = {x: list('__' for _ in range(10)) for x in ('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i')}
         self._blue_palace = ['d10', 'e10', 'f10', 'd9', 'e9', 'f9', 'd8', 'e8', 'f8']
         self._red_palace = ['d1', 'e1', 'f1', 'd2', 'e2', 'f2', 'd3', 'e3', 'f3']
+        self._blue_diag_palace = ['d10', 'f10', 'e9', 'd8', 'f8']
+        self._red_diag_palace = ['d1', 'f1', 'e2', 'd3', 'f3']
 
     def get_board(self):
         """Return the board, which is a dict of lists"""
@@ -148,6 +146,17 @@ class GameBoard:
         """Return list of all palace squares on the board. Palaces squares are string locations"""
         all_palace_squares = self._red_palace + self._blue_palace
         return all_palace_squares
+
+    def get_team_diag_palace(self, team):
+        """Return a list of string palace squares from which diagonal moves can be made for a given team."""
+        if team == 'blue':
+            return self._blue_diag_palace
+        else:
+            return self._red_diag_palace
+
+    def get_both_diag_palace(self):
+        """Return a list of string palace squares from which diagonal moves can be made for both palaces."""
+        return self._red_diag_palace + self._blue_diag_palace
 
     def display_board(self):
         """Converts dict of lists to list of lists and prints vertically for accurate display of board in terminal"""
@@ -445,7 +454,6 @@ class General(GamePiece):
         """Override print method to display gamepiece in terminal"""
         # If not importing colored module, use normal print
         return "GN"
-        #return colored("GN", self._team)
 
     def valid_moves(self, location, gameboard):
         """Determines valid moves for the piece, given the starting location, and the state of the gameboard"""
@@ -453,6 +461,7 @@ class General(GamePiece):
         starting_col = location[0]
         starting_row = int(location[1:])
         palace_squares = gameboard.get_palace(self.get_team())
+        palace_diag_squares = gameboard.get_team_diag_palace(self.get_team())
 
         # Create initial 9 possible moves
         for row_delta in [-1, 0, 1]:
@@ -462,7 +471,12 @@ class General(GamePiece):
                 if move_location in palace_squares and (
                         gameboard.get_square(move_location) == '__' or
                         gameboard.get_square(move_location).get_team() != self.get_team()):
-                    move_list.append(chr(ord(starting_col) + col_delta) + str(starting_row + row_delta))
+                    # diagonal moves must by from diagonally connect palace squares
+                    if abs(row_delta) + abs(col_delta) == 2:
+                        if location in palace_diag_squares:
+                            move_list.append(chr(ord(starting_col) + col_delta) + str(starting_row + row_delta))
+                    else:
+                        move_list.append(chr(ord(starting_col) + col_delta) + str(starting_row + row_delta))
 
         return set(move_list)
 
@@ -480,7 +494,6 @@ class Guard(GamePiece):
         """Override print method to display gamepiece in terminal"""
         # If not importing colored module, use normal print
         return "GD"
-        #return colored("GD", self._team)
 
     def valid_moves(self, location, gameboard):
         """Determines valid moves for the piece, given the starting location, and the state of the gameboard"""
@@ -488,6 +501,7 @@ class Guard(GamePiece):
         starting_col = location[0]
         starting_row = int(location[1:])
         palace_squares = gameboard.get_palace(self.get_team())
+        palace_diag_squares = gameboard.get_team_diag_palace(self.get_team())
 
         # Create initial 9 possible moves
         for row_delta in [-1, 0, 1]:
@@ -497,7 +511,12 @@ class Guard(GamePiece):
                 if move_location in palace_squares and (
                         gameboard.get_square(move_location) == '__' or
                         gameboard.get_square(move_location).get_team() != self.get_team()):
-                    move_list.append(chr(ord(starting_col) + col_delta) + str(starting_row + row_delta))
+                    # diagonal moves must by from diagonally connect palace squares
+                    if abs(row_delta) + abs(col_delta) == 2:
+                        if location in palace_diag_squares:
+                            move_list.append(chr(ord(starting_col) + col_delta) + str(starting_row + row_delta))
+                    else:
+                        move_list.append(chr(ord(starting_col) + col_delta) + str(starting_row + row_delta))
 
         return set(move_list)
 
@@ -515,7 +534,6 @@ class Horse(GamePiece):
         """Override print method to display gamepiece in terminal"""
         # If not importing colored module, use normal print
         return "HS"
-        #return colored("HS", self._team)
 
     def valid_moves(self, location, gameboard):
         """Determines valid moves for the piece, given the starting location, and the state of the gameboard"""
@@ -593,7 +611,6 @@ class Elephant(GamePiece):
         """Override print method to display gamepiece in terminal"""
         # If not importing colored module, use normal print
         return "EL"
-        #return colored("EL", self._team)
 
     def valid_moves(self, location, gameboard):
         """Determines valid moves for the piece, given the starting location, and the state of the gameboard"""
@@ -681,7 +698,6 @@ class Chariot(GamePiece):
         """Override print method to display gamepiece in terminal"""
         # If not importing colored module, use normal print
         return "CH"
-        #return colored("CH", self._team)
 
     def valid_moves(self, location, gameboard):
         """Determines valid moves for the piece, given the starting location, and the state of the gameboard"""
@@ -689,6 +705,7 @@ class Chariot(GamePiece):
         starting_col = location[0]
         starting_row = int(location[1:])
         palace_squares = gameboard.get_both_palaces()
+        palace_diag_squares = gameboard.get_both_diag_palace()
 
         # Chariot moves in 4 orthogonal directions while outside palace, and 8 directions inside palace
         for direction in ['up', 'right', 'down', 'left', 'upright', 'downright', 'downleft', 'upleft']:
@@ -697,8 +714,8 @@ class Chariot(GamePiece):
             last_row = starting_row
             # all moves in a line up to edge of board/ally piece/onto enemy piece are valid
             # if in palace, can move diagonally to edge of palace as well
-            if direction in ['upright', 'downright', 'downleft', 'upleft'] and location not in gameboard.get_palace(palace_squares):
-                # if chariot is not in palace, it can't move diagonally
+            if direction in ['upright', 'downright', 'downleft', 'upleft'] and location not in palace_diag_squares:
+                # if chariot is not in diagonally connect palace squares, it can't move diagonally
                 stop_flag = True
             while stop_flag is False:
                 if direction == 'up':
@@ -756,7 +773,6 @@ class Cannon(GamePiece):
         """Override print method to display gamepiece in terminal"""
         # If not importing colored module, use normal print
         return "CA"
-        #return colored("CA", self._team)
 
     def valid_moves(self, location, gameboard):
         """Determines valid moves for the piece, given the starting location, and the state of the gameboard"""
@@ -764,6 +780,7 @@ class Cannon(GamePiece):
         starting_col = location[0]
         starting_row = int(location[1:])
         palace_squares = gameboard.get_both_palaces()
+        palace_diag_squares = gameboard.get_both_diag_palace()
 
         # Cannon moves in 4 orthogonal directions while outside palace, and 8 directions inside palace. It must jump a unit
         for direction in ['up', 'right', 'down', 'left', 'upright', 'downright', 'downleft', 'upleft']:
@@ -773,9 +790,8 @@ class Cannon(GamePiece):
             last_row = starting_row
             # all moves in a line up to edge of board/ally piece/onto enemy piece are valid
             # if in palace, can move diagonally to edge of palace as well
-            if direction in ['upright', 'downright', 'downleft', 'upleft'] and location not in gameboard.get_palace(
-                    palace_squares):
-                # if cannon is not in palace, it can't move diagonally
+            if direction in ['upright', 'downright', 'downleft', 'upleft'] and location not in palace_diag_squares:
+                # if cannon is not in diagonally connected palace squares, it can't move diagonally
                 stop_flag = True
             while stop_flag is False:
                 # Set next location based on direction
@@ -845,7 +861,6 @@ class Soldier(GamePiece):
         """Override print method to display gamepiece in terminal"""
         # If not importing colored module, use normal print
         return "SD"
-        #return colored("SD", self._team)
 
     def valid_moves(self, location, gameboard):
         """Determines valid moves for the piece, given the starting location, and the state of the gameboard"""
@@ -859,6 +874,7 @@ class Soldier(GamePiece):
         else:
             enemy_team = 'red'
         palace_squares = gameboard.get_palace(enemy_team)
+        palace_diag_squares = gameboard.get_team_diag_palace(enemy_team)
 
         # Create 5 possible moves, forward movement depending on team
         move_sideways_1 = chr(ord(starting_col) - 1) + str(starting_row)
@@ -878,11 +894,9 @@ class Soldier(GamePiece):
                         gameboard.get_square(move) == '__' or
                         gameboard.get_square(move).get_team() != self.get_team()):
                 move_list.append(move)
-        # Check diagonal moves for being in the palace
+        # Check diagonal moves for being in the palace and originating from diagonally connected squares
         for move in [move_diag_1, move_diag_2]:
-            if gameboard.get_square(move) is not None and move in palace_squares and (
-                        gameboard.get_square(move) == '__' or
-                        gameboard.get_square(move).get_team() != self.get_team()):
+            if gameboard.get_square(move) is not None and move in palace_squares and location in palace_diag_squares and (gameboard.get_square(move) == '__' or gameboard.get_square(move).get_team() != self.get_team()):
                 move_list.append(move)
 
         return set(move_list)
