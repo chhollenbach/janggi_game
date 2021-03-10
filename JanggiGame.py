@@ -186,6 +186,24 @@ class JanggiGame:
         else:
             return 'red'
 
+    def are_generals_facing(self):
+        """Checks if generals are facing unobstructed and returns True or False"""
+        red_general_column = self._red_general[0]
+        blue_general_column = self._blue_general[0]
+        if red_general_column == blue_general_column:
+            red_general_flag = False
+            intercepting_piece_flag = False
+            # Loop through column of generals, find red general (since red will always come before blue), check if
+            # piece is between red and blue general
+            for val in self._janggi_board.get_board()[red_general_column]:
+                if red_general_flag is True and val != "__" and val.get_type() == "General" and intercepting_piece_flag is False:
+                    return True
+                if red_general_flag is True and val != "__" and val.get_type() != "General":
+                    intercepting_piece_flag = True
+                if val != "__" and val.get_type() == "General" and val.get_team() == 'red':
+                    red_general_flag = True
+        return False
+
     def get_all_enemy_moves(self, team):
         """
         Determine all possible moves of enemy. Used for check/mate logic. Returns set of all move locations for
@@ -261,10 +279,15 @@ class JanggiGame:
         general_location = self.get_general_loc(self.get_player_turn())
 
         # Pass turn if location_a and location_b are the same, and the player isn't in check
-        player_in_check_at_beginning_of_turn = self.is_in_check(self._player_turn)
-        if location_a == location_b and player_in_check_at_beginning_of_turn is False:
-            self.change_turn()
-            return True
+        # IN ORIGINAL SPECS THIS WAS USED TO PASS TURN
+        # USING PYGAME, BUTTON IS CREATED TO PASS TURN, FEEDING SAME LOCATION WILL JUST RESET MOVE
+        # player_in_check_at_beginning_of_turn = self.is_in_check(self._player_turn)
+        # if location_a == location_b and player_in_check_at_beginning_of_turn is False:
+        #     self.change_turn()
+        #     return True
+        if location_a == location_b:
+            return False
+
         # Check for validity of move
         # Check that location_a is in game bounds, there is a friendly unit there, and game isn't over
         elif from_square == '__' or from_square is None or from_square.get_team() != self._player_turn or self._game_state != 'UNFINISHED':
@@ -280,14 +303,15 @@ class JanggiGame:
             self._janggi_board.set_square(location_b, from_square)
             self._janggi_board.set_square(location_a, "__")
 
-            # Insure that player does not end their turn in check
+            # Insure that player does not end their turn in check or with generals facing
             # If the player does end their turn in check, we need to roll the move back and return False
             # A player ends their turn in check if they move into check (invalid) or do not move out of check if placed
             # into it by the enemy in the previous turn
             # We make the move first so that we can check all enemy moves after player move, as player move can effect
             # enemy move possibilities
             player_in_check_after_move = self.is_in_check(self._player_turn)
-            if player_in_check_after_move is True:
+            generals_facing = self.are_generals_facing()
+            if player_in_check_after_move is True or generals_facing is True:
                 if from_square.get_type() == "General":
                     self.change_general_location(general_location, self.get_player_turn())
                 self._janggi_board.set_square(location_b, to_square)
@@ -337,16 +361,16 @@ class JanggiGame:
             if side == 'neither':
                 return True
             elif side == 'right':
-                self._janggi_board.set_square('g1', Horse('blue'))
-                self._janggi_board.set_square('h1', Elephant('blue'))
+                self._janggi_board.set_square('g1', Horse('red'))
+                self._janggi_board.set_square('h1', Elephant('red'))
             elif side == 'left':
-                self._janggi_board.set_square('b1', Horse('blue'))
-                self._janggi_board.set_square('c1', Elephant('blue'))
+                self._janggi_board.set_square('b1', Horse('red'))
+                self._janggi_board.set_square('c1', Elephant('red'))
             else:
-                self._janggi_board.set_square('b1', Horse('blue'))
-                self._janggi_board.set_square('c1', Elephant('blue'))
-                self._janggi_board.set_square('g1', Horse('blue'))
-                self._janggi_board.set_square('h1', Elephant('blue'))
+                self._janggi_board.set_square('b1', Horse('red'))
+                self._janggi_board.set_square('c1', Elephant('red'))
+                self._janggi_board.set_square('g1', Horse('red'))
+                self._janggi_board.set_square('h1', Elephant('red'))
 
 
 class GamePiece:
@@ -834,18 +858,29 @@ def main():
     pygame.init()
 
     # Define screen width/height
-    screen_width = 639
-    screen_height = 711
+    screen_width = 539
+    board_height = 600
+    screen_height = board_height + int(.14 * board_height)
+
+    # Define colors
+    board_color = (199, 158, 89)
+    red_color = (255, 0, 0)
+    blue_color = (0, 43, 198)
+    black_color = (0, 0, 0)
+    white_color = (255, 255, 255)
 
     # Define piece dimensions
-    piece_length = int(screen_width * 0.1)
+    piece_length = int(screen_width * 0.11)
 
     # Create screen
     screen = pygame.display.set_mode([screen_width, screen_height])
 
     # Import background image
     bg = pygame.image.load(os.path.join('images', 'empty_board.png'))
-    bg_scaled = pygame.transform.scale(bg, (screen_width, screen_height))
+    bg_scaled = pygame.transform.scale(bg, (screen_width, board_height))
+
+    # Create surface of same color as board at bottom to extend usable space
+    bottom_space = pygame.Surface((screen_width, screen_height - board_height))
 
     # Create dict to map game location string to screen coord - [col, row]
     board_to_coord_map = {}
@@ -857,11 +892,16 @@ def main():
         col_counter += 1
 
     # Generate list of rectangles to detect clicking
-    rect_list = []
+    piece_rect_list = []
     for key, val in board_to_coord_map.items():
         location_rect = pygame.Rect(0, 0, piece_length, piece_length)
         location_rect.center = val
-        rect_list.append(location_rect)
+        piece_rect_list.append(location_rect)
+
+    # Create game won font and message font
+    pygame.font.init()
+    endgame_font = pygame.font.SysFont('Palatino Linotype', 70, False, False)
+    message_font = pygame.font.SysFont('Palatino Linotype', 13, False, False)
 
     # Load piece images
     red_king = pygame.transform.scale(pygame.image.load(os.path.join('images', 'Red_King.png')),
@@ -893,9 +933,30 @@ def main():
     blue_soldier = pygame.transform.scale(pygame.image.load(os.path.join('images', 'Green_Zol.png')),
                                           (piece_length, piece_length))
 
-    # Create game won font
-    pygame.font.init()
-    endgame_font = pygame.font.SysFont('Impact', 50, False, False)
+    # Load skip and surrender buttons
+    skip_button = pygame.transform.scale(pygame.image.load(os.path.join('images', 'skip_button.png')), (piece_length, piece_length))
+    surrender_button = pygame.transform.scale(pygame.image.load(os.path.join('images', 'surrender_button.png')), (piece_length, piece_length))
+
+    # Generate rectangles to detect clicking of skip and surrender button
+    skip_button_rect = skip_button.get_rect()
+    skip_button_rect.center = (screen_width * .25, board_height + (screen_height - board_height) * .5)
+    surrender_button_rect = surrender_button.get_rect()
+    surrender_button_rect.center = (screen_width * .75, board_height + (screen_height - board_height) * .5)
+
+    # Load buttons for horse/elephant swapping and generate rects
+    left_button = pygame.transform.scale(pygame.image.load(os.path.join('images', 'left_icon.png')), (int(piece_length * .8), int(piece_length * .8)))
+    right_button = pygame.transform.scale(pygame.image.load(os.path.join('images', 'right_icon.png')), (int(piece_length * .8), int(piece_length * .8)))
+    both_button = pygame.transform.scale(pygame.image.load(os.path.join('images', 'both_icon.png')), (int(piece_length * .8), int(piece_length * .8)))
+    none_button = pygame.transform.scale(pygame.image.load(os.path.join('images', 'none_button.png')), (int(piece_length * .8), int(piece_length * .8)))
+
+    left_button_rect = left_button.get_rect()
+    left_button_rect.center = (screen_width * .2, board_height + (screen_height - board_height) * .64)
+    right_button_rect = right_button.get_rect()
+    right_button_rect.center = (screen_width * .4, board_height + (screen_height - board_height) * .64)
+    both_button_rect = both_button.get_rect()
+    both_button_rect.center = (screen_width * .6, board_height + (screen_height - board_height) * .64)
+    none_button_rect = none_button.get_rect()
+    none_button_rect.center = (screen_width * .8, board_height + (screen_height - board_height) * .64)
 
     # Init Janggi game
     game = JanggiGame()
@@ -964,8 +1025,19 @@ def main():
     from_coords = None
     to_coords = None
     from_rect = None
+    blue_swap = False
+    red_swap = False
+    swap_over = False
 
+    # CODE BELOW IS THE GAME LOOP
     while running:
+        skip_flag = False
+        surrender_flag = False
+        player_turn = game.get_player_turn()
+
+        if red_swap is True and blue_swap is True:
+            swap_over = True
+
         if to_coords is not None:
             from_coords = None
             to_coords = None
@@ -975,15 +1047,68 @@ def main():
             # Did the user click the window close button?
             if event.type == pygame.QUIT:
                 running = False
-            if event.type == pygame.MOUSEBUTTONUP and from_coords is not None:
-                for rectangle in rect_list:
+            if event.type == pygame.MOUSEBUTTONUP and from_coords is not None and swap_over is True:
+                for rectangle in piece_rect_list:
                     if rectangle.collidepoint(event.pos):
                         to_coords = rectangle.center
-            if event.type == pygame.MOUSEBUTTONUP and from_coords is None:
-                for rectangle in rect_list:
+            if event.type == pygame.MOUSEBUTTONUP and from_coords is None and swap_over is True:
+                for rectangle in piece_rect_list:
                     if rectangle.collidepoint(event.pos):
                         from_coords = rectangle.center
                         from_rect = rectangle
+            if event.type == pygame.MOUSEBUTTONUP and surrender_button_rect.collidepoint(event.pos) and swap_over is True:
+                surrender_flag = True
+            if event.type == pygame.MOUSEBUTTONUP and skip_button_rect.collidepoint(event.pos) and swap_over is True:
+                skip_flag = True
+            if event.type == pygame.MOUSEBUTTONUP and left_button_rect.collidepoint(event.pos) and swap_over is False:
+                if player_turn == 'blue':
+                    blue_swap = True
+                    game.swap_horse_elephant(player_turn, 'left')
+                    game.change_turn()
+                else:
+                    red_swap = True
+                    game.swap_horse_elephant(player_turn, 'left')
+                    game.change_turn()
+            if event.type == pygame.MOUSEBUTTONUP and right_button_rect.collidepoint(event.pos) and swap_over is False:
+                if player_turn == 'blue':
+                    blue_swap = True
+                    game.swap_horse_elephant(player_turn, 'right')
+                    game.change_turn()
+                else:
+                    red_swap = True
+                    game.swap_horse_elephant(player_turn, 'right')
+                    game.change_turn()
+            if event.type == pygame.MOUSEBUTTONUP and both_button_rect.collidepoint(event.pos) and swap_over is False:
+                if player_turn == 'blue':
+                    blue_swap = True
+                    game.swap_horse_elephant(player_turn, 'both')
+                    game.change_turn()
+                else:
+                    red_swap = True
+                    game.swap_horse_elephant(player_turn, 'both')
+                    game.change_turn()
+            if event.type == pygame.MOUSEBUTTONUP and none_button_rect.collidepoint(event.pos) and swap_over is False:
+                if player_turn == 'blue':
+                    blue_swap = True
+                    game.swap_horse_elephant(player_turn, 'neither')
+                    game.change_turn()
+                else:
+                    red_swap = True
+                    game.swap_horse_elephant(player_turn, 'neither')
+                    game.change_turn()
+
+
+        # pass turn if skip_flag is true
+        player_in_check_at_beginning_of_turn = game.is_in_check(game.get_player_turn())
+        if skip_flag is True and player_in_check_at_beginning_of_turn is False:
+            game.change_turn()
+
+        # End game if player surrenders
+        if surrender_flag is True:
+            if player_turn == 'red':
+                game.set_game_state('BLUE_WON')
+            else:
+                game.set_game_state('RED_WON')
 
         from_location = None
         to_location = None
@@ -999,36 +1124,63 @@ def main():
             game.make_move(from_location, to_location)
 
         # Clear Screen
-        screen.fill((255, 255, 255))
+        screen.fill(white_color)
 
         # Add background image
         screen.blit(bg_scaled, (0, 0))
 
+        # Add dead space at bottom
+        screen.blit(bottom_space, (0, board_height))
+
+        # fill in the bottom space with board color
+        pygame.Surface.fill(bottom_space, board_color)
+
         # get team color and update move prompter
-        if game.get_player_turn() == 'red':
-            turn = (255, 0, 0)
+        if player_turn == 'red':
+            turn = red_color
         else:
-            turn = (0, 43, 198)
-        # Place colored circle at 4 points to signal turn
-        if game.get_game_state() == "UNFINISHED":
-            pygame.draw.circle(screen, turn, (screen_width // 2, screen_height * .975), 10)
-            pygame.draw.circle(screen, turn, (screen_width // 2, screen_height * .025), 10)
-            pygame.draw.circle(screen, turn, (screen_width * .975, screen_height // 2), 10)
-            pygame.draw.circle(screen, turn, (screen_width * .025, screen_height // 2), 10)
+            turn = blue_color
+
+        # Place colored circle at bottom to signal turn
+        if game.get_game_state() == "UNFINISHED" and swap_over is True:
+            filled_circle_size = (0.14 * screen_height) // 4
+            circle_thickness = int(.2 * filled_circle_size)
+            pygame.draw.circle(screen, turn, (screen_width // 2, board_height + (screen_height - board_height) * .5), filled_circle_size)
+            pygame.draw.circle(screen, black_color, (screen_width // 2, board_height + (screen_height - board_height) * .5), filled_circle_size + circle_thickness, circle_thickness)
+
+        # add pass and surrender buttons as long as game is unfinished
+        if game.get_game_state() == "UNFINISHED" and swap_over is True:
+            screen.blit(skip_button, skip_button_rect)
+            screen.blit(surrender_button, surrender_button_rect)
 
         # Draw rectangle around selected from move
-        if from_rect is not None:
-            if game.get_player_turn() == 'red':
-                pygame.draw.rect(screen, (255, 0, 0), from_rect, 4)
-            else:
-                pygame.draw.rect(screen, (0, 43, 198), from_rect, 4)
+        if from_rect is not None and swap_over is True:
+            from_square = game.get_janggi_board().get_square(from_location)
+            if from_square != "__":
+                if player_turn == 'red' and from_square.get_team() == 'red':
+                    pygame.draw.rect(screen, red_color, from_rect, 4)
+                elif player_turn == 'blue' and from_square.get_team() == 'blue':
+                    pygame.draw.rect(screen, blue_color, from_rect, 4)
 
+        # print winning message after checkmate
         if game.get_game_state() == 'BLUE_WON':
-            winning_message = endgame_font.render("Blue Team Won", False, (0, 43, 198))
-            screen.blit(winning_message, (screen_width * .1, screen_height // 2))
+            winning_message = endgame_font.render("Blue Team Won", False, blue_color)
+            screen.blit(winning_message, ((screen_width - winning_message.get_width()) // 2, ((screen_height - board_height) - winning_message.get_height()) // 2 + board_height))
         elif game.get_game_state() == 'RED_WON':
-            winning_message = endgame_font.render("Red Team Won", False, (255, 0, 0))
-            screen.blit(winning_message, (screen_width * .1, screen_height // 2))
+            winning_message = endgame_font.render("Red Team Won", False, red_color)
+            screen.blit(winning_message, ((screen_width - winning_message.get_width()) // 2, ((screen_height - board_height) - winning_message.get_height()) // 2 + board_height))
+
+        # output buttons/message for elephant/horse swap at beginning of game
+        if swap_over is False:
+            team_turn = game.get_player_turn()
+            swap_prompt_message = team_turn.upper() + " Please choose to swap Horses and Elephants. Choose Left, Both, Right, or None"
+            swap_prompt = message_font.render(swap_prompt_message, False, black_color)
+            screen.blit(swap_prompt, ((screen_width - swap_prompt.get_width()) // 2, ((screen_height - board_height) - swap_prompt.get_height()) * .1 + board_height))
+            screen.blit(left_button, left_button_rect)
+            screen.blit(right_button, right_button_rect)
+            screen.blit(both_button, both_button_rect)
+            screen.blit(none_button, none_button_rect)
+
 
         # Update gui
         update_gui()
