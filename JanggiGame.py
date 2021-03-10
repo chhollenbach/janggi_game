@@ -858,8 +858,8 @@ def main():
     pygame.init()
 
     # Define screen width/height
-    screen_width = 539
-    board_height = 600
+    screen_width = 213 * 2
+    board_height = 237 * 2
     screen_height = board_height + int(.14 * board_height)
 
     # Define colors
@@ -870,7 +870,8 @@ def main():
     white_color = (255, 255, 255)
 
     # Define piece dimensions
-    piece_length = int(screen_width * 0.11)
+    piece_width = int(screen_width * 0.12)
+    piece_height = int(piece_width * 0.88235)
 
     # Create screen
     screen = pygame.display.set_mode([screen_width, screen_height])
@@ -894,48 +895,48 @@ def main():
     # Generate list of rectangles to detect clicking
     piece_rect_list = []
     for key, val in board_to_coord_map.items():
-        location_rect = pygame.Rect(0, 0, piece_length, piece_length)
+        location_rect = pygame.Rect(0, 0, piece_width, piece_height)
         location_rect.center = val
         piece_rect_list.append(location_rect)
 
     # Create game won font and message font
     pygame.font.init()
-    endgame_font = pygame.font.SysFont('Palatino Linotype', 70, False, False)
-    message_font = pygame.font.SysFont('Palatino Linotype', 13, False, False)
+    endgame_font = pygame.font.SysFont('Palatino Linotype', 70)
+    message_font = pygame.font.SysFont('Palatino Linotype', 10)
 
     # Load piece images
     red_king = pygame.transform.scale(pygame.image.load(os.path.join('images', 'Red_King.png')),
-                                      (piece_length, piece_length))
+                                      (piece_width, piece_height))
     blue_king = pygame.transform.scale(pygame.image.load(os.path.join('images', 'Green_King.png')),
-                                       (piece_length, piece_length))
+                                       (piece_width, piece_height))
     red_guard = pygame.transform.scale(pygame.image.load(os.path.join('images', 'Red_Sa.png')),
-                                       (piece_length, piece_length))
+                                       (piece_width, piece_height))
     blue_guard = pygame.transform.scale(pygame.image.load(os.path.join('images', 'Green_Sa.png')),
-                                        (piece_length, piece_length))
+                                        (piece_width, piece_height))
     red_horse = pygame.transform.scale(pygame.image.load(os.path.join('images', 'Red_Ma.png')),
-                                       (piece_length, piece_length))
+                                       (piece_width, piece_height))
     blue_horse = pygame.transform.scale(pygame.image.load(os.path.join('images', 'Green_Ma.png')),
-                                        (piece_length, piece_length))
+                                        (piece_width, piece_height))
     red_elephant = pygame.transform.scale(pygame.image.load(os.path.join('images', 'Red_Sang.png')),
-                                          (piece_length, piece_length))
+                                          (piece_width, piece_height))
     blue_elephant = pygame.transform.scale(pygame.image.load(os.path.join('images', 'Green_Sang.png')),
-                                           (piece_length, piece_length))
+                                           (piece_width, piece_height))
     red_chariot = pygame.transform.scale(pygame.image.load(os.path.join('images', 'Red_Cha.png')),
-                                         (piece_length, piece_length))
+                                         (piece_width, piece_height))
     blue_chariot = pygame.transform.scale(pygame.image.load(os.path.join('images', 'Green_Cha.png')),
-                                          (piece_length, piece_length))
+                                          (piece_width, piece_height))
     red_cannon = pygame.transform.scale(pygame.image.load(os.path.join('images', 'Red_Po.png')),
-                                        (piece_length, piece_length))
+                                        (piece_width, piece_height))
     blue_cannon = pygame.transform.scale(pygame.image.load(os.path.join('images', 'Green_Po.png')),
-                                         (piece_length, piece_length))
+                                         (piece_width, piece_height))
     red_soldier = pygame.transform.scale(pygame.image.load(os.path.join('images', 'Red_Byung.png')),
-                                         (piece_length, piece_length))
+                                         (piece_width, piece_height))
     blue_soldier = pygame.transform.scale(pygame.image.load(os.path.join('images', 'Green_Zol.png')),
-                                          (piece_length, piece_length))
+                                          (piece_width, piece_height))
 
     # Load skip and surrender buttons
-    skip_button = pygame.transform.scale(pygame.image.load(os.path.join('images', 'skip_button.png')), (piece_length, piece_length))
-    surrender_button = pygame.transform.scale(pygame.image.load(os.path.join('images', 'surrender_button.png')), (piece_length, piece_length))
+    skip_button = pygame.transform.scale(pygame.image.load(os.path.join('images', 'skip_button.png')), (piece_width, piece_width))
+    surrender_button = pygame.transform.scale(pygame.image.load(os.path.join('images', 'surrender_button.png')), (piece_width, piece_width))
 
     # Generate rectangles to detect clicking of skip and surrender button
     skip_button_rect = skip_button.get_rect()
@@ -944,10 +945,10 @@ def main():
     surrender_button_rect.center = (screen_width * .75, board_height + (screen_height - board_height) * .5)
 
     # Load buttons for horse/elephant swapping and generate rects
-    left_button = pygame.transform.scale(pygame.image.load(os.path.join('images', 'left_icon.png')), (int(piece_length * .8), int(piece_length * .8)))
-    right_button = pygame.transform.scale(pygame.image.load(os.path.join('images', 'right_icon.png')), (int(piece_length * .8), int(piece_length * .8)))
-    both_button = pygame.transform.scale(pygame.image.load(os.path.join('images', 'both_icon.png')), (int(piece_length * .8), int(piece_length * .8)))
-    none_button = pygame.transform.scale(pygame.image.load(os.path.join('images', 'none_button.png')), (int(piece_length * .8), int(piece_length * .8)))
+    left_button = pygame.transform.scale(pygame.image.load(os.path.join('images', 'left_icon.png')), (int(piece_width * .8), int(piece_width * .8)))
+    right_button = pygame.transform.scale(pygame.image.load(os.path.join('images', 'right_icon.png')), (int(piece_width * .8), int(piece_width * .8)))
+    both_button = pygame.transform.scale(pygame.image.load(os.path.join('images', 'both_icon.png')), (int(piece_width * .8), int(piece_width * .8)))
+    none_button = pygame.transform.scale(pygame.image.load(os.path.join('images', 'none_button.png')), (int(piece_width * .8), int(piece_width * .8)))
 
     left_button_rect = left_button.get_rect()
     left_button_rect.center = (screen_width * .2, board_height + (screen_height - board_height) * .64)
@@ -970,52 +971,52 @@ def main():
                 if value != "__" and value.get_type() == "Soldier":
                     if value.get_team() == 'red':
                         coord = (board_to_coord_map[key + str(row_counter)][0], board_to_coord_map[key + str(row_counter)][1])
-                        screen.blit(red_soldier, (coord[0] - piece_length // 2, coord[1] - piece_length // 2))
+                        screen.blit(red_soldier, (coord[0] - piece_width // 2, coord[1] - piece_height // 2))
                     if value.get_team() == 'blue':
                         coord = (board_to_coord_map[key + str(row_counter)][0], board_to_coord_map[key + str(row_counter)][1])
-                        screen.blit(blue_soldier, (coord[0] - piece_length // 2, coord[1] - piece_length // 2))
+                        screen.blit(blue_soldier, (coord[0] - piece_width // 2, coord[1] - piece_height // 2))
                 elif value != "__" and value.get_type() == "General":
                     if value.get_team() == 'red':
                         coord = (board_to_coord_map[key + str(row_counter)][0], board_to_coord_map[key + str(row_counter)][1])
-                        screen.blit(red_king, (coord[0] - piece_length // 2, coord[1] - piece_length // 2))
+                        screen.blit(red_king, (coord[0] - piece_width // 2, coord[1] - piece_height // 2))
                     if value.get_team() == 'blue':
                         coord = (board_to_coord_map[key + str(row_counter)][0], board_to_coord_map[key + str(row_counter)][1])
-                        screen.blit(blue_king, (coord[0] - piece_length // 2, coord[1] - piece_length // 2))
+                        screen.blit(blue_king, (coord[0] - piece_width // 2, coord[1] - piece_height // 2))
                 elif value != "__" and value.get_type() == "Guard":
                     if value.get_team() == 'red':
                         coord = (board_to_coord_map[key + str(row_counter)][0], board_to_coord_map[key + str(row_counter)][1])
-                        screen.blit(red_guard, (coord[0] - piece_length // 2, coord[1] - piece_length // 2))
+                        screen.blit(red_guard, (coord[0] - piece_width // 2, coord[1] - piece_height // 2))
                     if value.get_team() == 'blue':
                         coord = (board_to_coord_map[key + str(row_counter)][0], board_to_coord_map[key + str(row_counter)][1])
-                        screen.blit(blue_guard, (coord[0] - piece_length // 2, coord[1] - piece_length // 2))
+                        screen.blit(blue_guard, (coord[0] - piece_width // 2, coord[1] - piece_height // 2))
                 elif value != "__" and value.get_type() == "Horse":
                     if value.get_team() == 'red':
                         coord = (board_to_coord_map[key + str(row_counter)][0], board_to_coord_map[key + str(row_counter)][1])
-                        screen.blit(red_horse, (coord[0] - piece_length // 2, coord[1] - piece_length // 2))
+                        screen.blit(red_horse, (coord[0] - piece_width // 2, coord[1] - piece_height // 2))
                     if value.get_team() == 'blue':
                         coord = (board_to_coord_map[key + str(row_counter)][0], board_to_coord_map[key + str(row_counter)][1])
-                        screen.blit(blue_horse, (coord[0] - piece_length // 2, coord[1] - piece_length // 2))
+                        screen.blit(blue_horse, (coord[0] - piece_width // 2, coord[1] - piece_height // 2))
                 elif value != "__" and value.get_type() == "Elephant":
                     if value.get_team() == 'red':
                         coord = (board_to_coord_map[key + str(row_counter)][0], board_to_coord_map[key + str(row_counter)][1])
-                        screen.blit(red_elephant, (coord[0] - piece_length // 2, coord[1] - piece_length // 2))
+                        screen.blit(red_elephant, (coord[0] - piece_width // 2, coord[1] - piece_height // 2))
                     if value.get_team() == 'blue':
                         coord = (board_to_coord_map[key + str(row_counter)][0], board_to_coord_map[key + str(row_counter)][1])
-                        screen.blit(blue_elephant, (coord[0] - piece_length // 2, coord[1] - piece_length // 2))
+                        screen.blit(blue_elephant, (coord[0] - piece_width // 2, coord[1] - piece_height // 2))
                 elif value != "__" and value.get_type() == "Chariot":
                     if value.get_team() == 'red':
                         coord = (board_to_coord_map[key + str(row_counter)][0], board_to_coord_map[key + str(row_counter)][1])
-                        screen.blit(red_chariot, (coord[0] - piece_length // 2, coord[1] - piece_length // 2))
+                        screen.blit(red_chariot, (coord[0] - piece_width // 2, coord[1] - piece_height // 2))
                     if value.get_team() == 'blue':
                         coord = (board_to_coord_map[key + str(row_counter)][0], board_to_coord_map[key + str(row_counter)][1])
-                        screen.blit(blue_chariot, (coord[0] - piece_length // 2, coord[1] - piece_length // 2))
+                        screen.blit(blue_chariot, (coord[0] - piece_width // 2, coord[1] - piece_height // 2))
                 elif value != "__" and value.get_type() == "Cannon":
                     if value.get_team() == 'red':
                         coord = (board_to_coord_map[key + str(row_counter)][0], board_to_coord_map[key + str(row_counter)][1])
-                        screen.blit(red_cannon, (coord[0] - piece_length // 2, coord[1] - piece_length // 2))
+                        screen.blit(red_cannon, (coord[0] - piece_width // 2, coord[1] - piece_height // 2))
                     if value.get_team() == 'blue':
                         coord = (board_to_coord_map[key + str(row_counter)][0], board_to_coord_map[key + str(row_counter)][1])
-                        screen.blit(blue_cannon, (coord[0] - piece_length // 2, coord[1] - piece_length // 2))
+                        screen.blit(blue_cannon, (coord[0] - piece_width // 2, coord[1] - piece_height // 2))
 
                 row_counter += 1
         return True
