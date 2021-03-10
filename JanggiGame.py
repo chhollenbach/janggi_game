@@ -901,7 +901,7 @@ def main():
 
     # Create game won font and message font
     pygame.font.init()
-    endgame_font = pygame.font.SysFont('Palatino Linotype', 70)
+    endgame_font = pygame.font.SysFont('Palatino Linotype', 50)
     message_font = pygame.font.SysFont('Palatino Linotype', 10)
 
     # Load piece images
