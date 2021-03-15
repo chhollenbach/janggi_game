@@ -23,6 +23,7 @@ occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim 
 
 **Upcoming Features**
 
-* Create an opening menu to select local or AI play
-* Create a simple AI
+* Improved user flow, such as opening menu
+* Improve AI with minimax algo
 * Refactor and modularize Pygame GUI code
+* Package into Android App
