@@ -2,119 +2,10 @@
 # Date: 2/22/2021
 # A program that implements Classes to play the board game "Janggi" aka Korean chess
 
-###############################################################################################
-################# DETAILED TEXT DESCRIPTIONS OF HOW TO HANDLE THE SCENARIOS ###################
-# Initializing the board
-"""
-The board is initialized as a dict of lists. Each key in the dictionary corresponds to the letter/column of a location,
-and key maps to a list of length 10 (the actual squares on the board). Thus location 'b4' would be the 4th value in the
-list associated with the key 'b'. The gameboard is initialized as its own class, and an instance of that class is
-created when the JanggiGame class gets initialized. The gameboard class, in addition to storing the dict of lists itself
-as a data member, also tracks locations that are considered palaces (simply as a list of string locations). In
-JanggiGame, GamePiece classes (see next scenario) are hardcoded into their starting positions on the dict of lists.
-
-1. for key in 'a'-'i', generate a list of length 10
-2. When JanggiGame is called, GamePiece instances are hardcoded into their starting positions in the above dict of lists
-"""
-# Determining how to represent pieces at a given location on the board
-"""
-Pieces are represented by classes. I made a GamePiece parent class, and then created separate child classes for each
-type of piece (General, Horse, etc.) that inherit the parent class. The parent class stores the team/type of the piece
-and has some basic getter methods, and the child classes have a valid_moves method that returns all possible moves for
-a given piece type, given its location and the state of the gameboard. When JanggiGame is initialized, it also places
-instances of each piece at the appropriate location on the Gameboard.
-
-1. Create child classes (each unique type of piece) that inherit from the parent GamePiece class
-2. Store instances of these classes within the dict of lists that represents the board (e.g. at key ='e' and index = 8, 
-which is the 9th square, store instance of General class for the blue team.)
-"""
-# Determining how to validate a given move according to the rules for each piece, turn taking and other game rules.
-"""
-Each child class of GamePiece contains a method called valid_moves. This method takes the current gameboard, and the 
-location of the gamepiece as parameters. Given that info, every location a gamepiece can move to is generated according 
-to its movement rules. For pieces like the general, guard, and soldier, which only move one square, this is fairly
-simple, as there are a limited number of squares, so each square is examined to make sure it is on the board, and either
-empty or occupied by an enemy. The General and guards are also checked to make sure the location is in the palace. For 
-horses and elephants, there are still a limited number of movement squares, but squares along the way are examined to 
-insure there are no blocking pieces, since these units can't jump. For the cannon and the chariot, we loop through 
-squares in a line to determine where the first blocking piece is for the chariot (either before a friendly piece, or at
-an enemy piece, or the edge of the board), or to determine if there is a jumping piece and where the subsequent blocking
-piece is for the cannon.
-
-In the make_move method of JanggiGame, validation is performed to insure that the piece being selected belongs to the 
-player who's turn it is (player turn is a data member in JanggiGame). There are also checks in that method to make sure
-that a player's move does not leave them in check, which would be an illegal move.
-
-1. for each gamepiece child class, have a valid_moves method
-2. for each direction the piece can move in (depends on piece/in palace or not), determine if subsequent square/move
-is empty, occupied by friendly piece, or occupied by enemy
-3. Depending on the gamepiece, either add square to move list, stop going in that direction, or continue onto next
-square in that direction (e.g. chariot would stop at the first ally piece, a cannon can jump the first non-cannon ally 
-piece, but soldier only needs to check 1 square out)
-"""
-# Modifying the board state after each move.
-"""
-There is a method in the GameBoard class called set_square(). This method takes a location and a value (expected to 
-either be a gamepiece instance or a string "__" which I use to represent an empty square. The method assigns the value
-to the given location in the dict of lists. In my make_move method, after validating the move, I call this method twice.
-Once to move the piece to the new location, and once to set the old location as empty.
-
-1. Validate move is legal
-2. call set_square on location to move to, setting it's value as the value of the square being moved from
-3. call set_square on location being moved from, setting it's value as empty, aka this string "__"
-4. If piece being moved is a general update data member in JanggiGame to track the general's location
-"""
-# Determining how to track which player's turn it is to play right now.
-"""
-The JanggiGame has a data member called player_turn. This is either 'red' or 'blue'. There is another method called
-change_turn that simply flips this from 'red' -> 'blue' (if player_turn == 'red' then player_turn = 'blue' else player_turn = 'red')
-or vice versa. In the make_move method, after a move is  validated, the board is updated, and any potential checkmate is
-evaluated, the change_turn method is called to change the turn of the player. This data member is used at the beginning
-of the make_move method to determine if the piece being moved belongs to the player who's turn it is (pieces have a data
-member for which team they belong to).
-
-1. Initialize game with 'blue' as the player turn
-2. at the beginning of the make_move method, check that piece being moved belongs to player whos turn it is
-3. after each valid move, change the player turn to the other player
-"""
-# Determining how to detect the checkmate scenario.
-"""
-This works in two parts. Part 1 is detecting check scenarios. I have a method called get_all_enemy_moves that takes a
-team as a parameter. This method loops through the boardm and for all pieces on teh opposing team, adds the pieces moves
-to a growing set. Then the is_in_check method simply determines if the teams general location (stored as a data member
-in the JanggiGame class) is in the list of all enemy moves. If yes, then team is in check, otherwise team is not in 
-check.
-
-Part 2 occurs whenever a player's move puts the enemy into check. When this happens, the is_in_checkmate method is
-called. This method will iterate through the board, and for each piece belonging to the player, for each move available
-to that piece, make the move, see if the player is still in check, the roll the move back. If at any point the player
-is NOT in check, we return False, as they have some move that will end the check, but if we check every piece they have
-and no move will break the check, we return True as they are in checkmate.
-
-Written out in pseudocode, this looks like:
-1. Get all available spaces enemy can move to
-2. Check if own team general in list of enemy move spaces
-3. If yes, for every piece on own team, for every move for every piece, make the move
-4. Get all available spaces enemy can move to after possible move made
-5. Check if own team general in list of enemy move spaces
-6. Roll the possible move back
-7. If the own team general was still in check, repeat steps 3-6 for all pieces on own team
-8. If own team general at any point is not in check anymore after possible move, there is no checkmate
-9. If after every piece and every move is evaluated, the general never left, check, there is a checkmate
-"""
-# Determining which player has won and also figuring out when to check that.
-"""
-At the end of the make_move method, after the move is made, a the opposing player is examed to determine if they are in
-check. If they are, they are evaluated to see if they are in check mate (see above description for more technical 
-details on how this is done). If they are in checkmate, the the player who just moved has won, so we can update the 
-game status and end the game.
-
-1. make valid move
-2. evaluate if enemy in check
-3. if yes, evaluate if enemy in checkmate
-4. if yes, change game state and end game
-"""
-###############################################################################################
+from termcolor import colored
+import pygame
+import os
+import random
 
 
 class GameBoard:
@@ -296,6 +187,24 @@ class JanggiGame:
         else:
             return 'red'
 
+    def are_generals_facing(self):
+        """Checks if generals are facing unobstructed and returns True or False"""
+        red_general_column = self._red_general[0]
+        blue_general_column = self._blue_general[0]
+        if red_general_column == blue_general_column:
+            red_general_flag = False
+            intercepting_piece_flag = False
+            # Loop through column of generals, find red general (since red will always come before blue), check if
+            # piece is between red and blue general
+            for val in self._janggi_board.get_board()[red_general_column]:
+                if red_general_flag is True and val != "__" and val.get_type() == "General" and intercepting_piece_flag is False:
+                    return True
+                if red_general_flag is True and val != "__" and val.get_type() != "General":
+                    intercepting_piece_flag = True
+                if val != "__" and val.get_type() == "General" and val.get_team() == 'red':
+                    red_general_flag = True
+        return False
+
     def get_all_enemy_moves(self, team):
         """
         Determine all possible moves of enemy. Used for check/mate logic. Returns set of all move locations for
@@ -371,10 +280,15 @@ class JanggiGame:
         general_location = self.get_general_loc(self.get_player_turn())
 
         # Pass turn if location_a and location_b are the same, and the player isn't in check
-        player_in_check_at_beginning_of_turn = self.is_in_check(self._player_turn)
-        if location_a == location_b and player_in_check_at_beginning_of_turn is False:
-            self.change_turn()
-            return True
+        # IN ORIGINAL SPECS THIS WAS USED TO PASS TURN
+        # USING PYGAME, BUTTON IS CREATED TO PASS TURN, FEEDING SAME LOCATION WILL JUST RESET MOVE
+        # player_in_check_at_beginning_of_turn = self.is_in_check(self._player_turn)
+        # if location_a == location_b and player_in_check_at_beginning_of_turn is False:
+        #     self.change_turn()
+        #     return True
+        if location_a == location_b:
+            return False
+
         # Check for validity of move
         # Check that location_a is in game bounds, there is a friendly unit there, and game isn't over
         elif from_square == '__' or from_square is None or from_square.get_team() != self._player_turn or self._game_state != 'UNFINISHED':
@@ -390,14 +304,15 @@ class JanggiGame:
             self._janggi_board.set_square(location_b, from_square)
             self._janggi_board.set_square(location_a, "__")
 
-            # Insure that player does not end their turn in check
+            # Insure that player does not end their turn in check or with generals facing
             # If the player does end their turn in check, we need to roll the move back and return False
             # A player ends their turn in check if they move into check (invalid) or do not move out of check if placed
             # into it by the enemy in the previous turn
             # We make the move first so that we can check all enemy moves after player move, as player move can effect
             # enemy move possibilities
             player_in_check_after_move = self.is_in_check(self._player_turn)
-            if player_in_check_after_move is True:
+            generals_facing = self.are_generals_facing()
+            if player_in_check_after_move is True or generals_facing is True:
                 if from_square.get_type() == "General":
                     self.change_general_location(general_location, self.get_player_turn())
                 self._janggi_board.set_square(location_b, to_square)
@@ -419,6 +334,78 @@ class JanggiGame:
         # Change the turn and return True to end turn
         self.change_turn()
         return True
+
+    def swap_horse_elephant(self, team, side):
+        """
+        For a team, takes either 'both', 'left', 'right', 'neither' as side arguments. Swap elephant and horse for chosen
+        side. Used in setup before moves are made.
+        """
+        if side not in ['neither', 'right', 'left', 'both']:
+            return False
+
+        if team == 'blue':
+            if side == 'neither':
+                return True
+            elif side == 'right':
+                self._janggi_board.set_square('g10', Horse('blue'))
+                self._janggi_board.set_square('h10', Elephant('blue'))
+            elif side == 'left':
+                self._janggi_board.set_square('b10', Horse('blue'))
+                self._janggi_board.set_square('c10', Elephant('blue'))
+            else:
+                self._janggi_board.set_square('b10', Horse('blue'))
+                self._janggi_board.set_square('c10', Elephant('blue'))
+                self._janggi_board.set_square('g10', Horse('blue'))
+                self._janggi_board.set_square('h10', Elephant('blue'))
+
+        if team == 'red':
+            if side == 'neither':
+                return True
+            elif side == 'right':
+                self._janggi_board.set_square('g1', Horse('red'))
+                self._janggi_board.set_square('h1', Elephant('red'))
+            elif side == 'left':
+                self._janggi_board.set_square('b1', Horse('red'))
+                self._janggi_board.set_square('c1', Elephant('red'))
+            else:
+                self._janggi_board.set_square('b1', Horse('red'))
+                self._janggi_board.set_square('c1', Elephant('red'))
+                self._janggi_board.set_square('g1', Horse('red'))
+                self._janggi_board.set_square('h1', Elephant('red'))
+
+    def auto_move(self, team):
+        """
+        VERY rudimentary AI. Simply loops through  all possible moves, and makes a capture if possible, otherwise randomly moves piece
+        """
+        # define value of pieces
+        piece_point_dict = {'General': 900, 'Guard': 20, 'Horse': 50, 'Elephant': 50, 'Chariot': 90, 'Cannon': 50, 'Soldier': 10}
+
+        max_point = 0
+        max_move = None
+        move_list = []
+
+        # Loop through key, value of board
+        for key, value in self._janggi_board.get_board().items():
+            # Keep track of row index
+            row = 1
+            # square is either "__" or a gamepiece
+            for square in value:
+                if square != "__" and square.get_team() == team:
+                    location = key + str(row)
+                    moves = square.valid_moves(location, self.get_janggi_board())
+                    # Loop through all moves for a gamepiece
+                    for move in moves:
+                        move_list.append([location, move])
+                        move_square = self.get_janggi_board().get_square(move)
+                        if move_square != "__" and piece_point_dict[move_square.get_type()] > max_point:
+                            max_point = piece_point_dict[move_square.get_type()]
+                            max_move = [location, move]
+                row += 1
+
+        if max_point > 0:
+            return max_move
+        else:
+            return random.choice(move_list)
 
 
 class GamePiece:
@@ -452,8 +439,7 @@ class General(GamePiece):
 
     def __str__(self):
         """Override print method to display gamepiece in terminal"""
-        # If not importing colored module, use normal print
-        return "GN"
+        return colored("GN", self._team)
 
     def valid_moves(self, location, gameboard):
         """Determines valid moves for the piece, given the starting location, and the state of the gameboard"""
@@ -492,8 +478,7 @@ class Guard(GamePiece):
 
     def __str__(self):
         """Override print method to display gamepiece in terminal"""
-        # If not importing colored module, use normal print
-        return "GD"
+        return colored("GD", self._team)
 
     def valid_moves(self, location, gameboard):
         """Determines valid moves for the piece, given the starting location, and the state of the gameboard"""
@@ -532,8 +517,7 @@ class Horse(GamePiece):
 
     def __str__(self):
         """Override print method to display gamepiece in terminal"""
-        # If not importing colored module, use normal print
-        return "HS"
+        return colored("HS", self._team)
 
     def valid_moves(self, location, gameboard):
         """Determines valid moves for the piece, given the starting location, and the state of the gameboard"""
@@ -609,8 +593,7 @@ class Elephant(GamePiece):
 
     def __str__(self):
         """Override print method to display gamepiece in terminal"""
-        # If not importing colored module, use normal print
-        return "EL"
+        return colored("EL", self._team)
 
     def valid_moves(self, location, gameboard):
         """Determines valid moves for the piece, given the starting location, and the state of the gameboard"""
@@ -696,8 +679,7 @@ class Chariot(GamePiece):
 
     def __str__(self):
         """Override print method to display gamepiece in terminal"""
-        # If not importing colored module, use normal print
-        return "CH"
+        return colored("CH", self._team)
 
     def valid_moves(self, location, gameboard):
         """Determines valid moves for the piece, given the starting location, and the state of the gameboard"""
@@ -739,7 +721,8 @@ class Chariot(GamePiece):
                 if next_square is None:
                     stop_flag = True
                 # if moving diagonally, and next square is outside the palace, stop
-                elif direction in ['upright', 'downright', 'downleft', 'upleft'] and next_location not in palace_squares:
+                elif direction in ['upright', 'downright', 'downleft',
+                                   'upleft'] and next_location not in palace_squares:
                     stop_flag = True
                 # if next square is empty, can move there
                 elif next_square == '__':
@@ -771,8 +754,7 @@ class Cannon(GamePiece):
 
     def __str__(self):
         """Override print method to display gamepiece in terminal"""
-        # If not importing colored module, use normal print
-        return "CA"
+        return colored("CA", self._team)
 
     def valid_moves(self, location, gameboard):
         """Determines valid moves for the piece, given the starting location, and the state of the gameboard"""
@@ -821,7 +803,8 @@ class Cannon(GamePiece):
                 elif next_square != "__" and next_square.get_type() == 'Cannon':
                     stop_flag = True
                 # if moving diagonally, and next square is outside the palace, stop
-                elif direction in ['upright', 'downright', 'downleft', 'upleft'] and next_location not in palace_squares:
+                elif direction in ['upright', 'downright', 'downleft',
+                                   'upleft'] and next_location not in palace_squares:
                     stop_flag = True
                 # if next square is empty, can move there so long as there is one piece in the way
                 elif next_square == '__' and unit_counter == 1:
@@ -859,8 +842,7 @@ class Soldier(GamePiece):
 
     def __str__(self):
         """Override print method to display gamepiece in terminal"""
-        # If not importing colored module, use normal print
-        return "SD"
+        return colored("SD", self._team)
 
     def valid_moves(self, location, gameboard):
         """Determines valid moves for the piece, given the starting location, and the state of the gameboard"""
@@ -891,29 +873,390 @@ class Soldier(GamePiece):
         # check that move is not off the board/onto a friendly piece
         for move in [move_sideways_1, move_sidweays_2, move_forward]:
             if gameboard.get_square(move) is not None and (
-                        gameboard.get_square(move) == '__' or
-                        gameboard.get_square(move).get_team() != self.get_team()):
+                    gameboard.get_square(move) == '__' or
+                    gameboard.get_square(move).get_team() != self.get_team()):
                 move_list.append(move)
         # Check diagonal moves for being in the palace and originating from diagonally connected squares
         for move in [move_diag_1, move_diag_2]:
-            if gameboard.get_square(move) is not None and move in palace_squares and location in palace_diag_squares and (gameboard.get_square(move) == '__' or gameboard.get_square(move).get_team() != self.get_team()):
+            if gameboard.get_square(
+                    move) is not None and move in palace_squares and location in palace_diag_squares and (
+                    gameboard.get_square(move) == '__' or gameboard.get_square(move).get_team() != self.get_team()):
                 move_list.append(move)
 
         return set(move_list)
 
 
 def main():
-    """Main function to test out code"""
+    """Run game using pygame"""
+
+    # Initialize pygame
+    pygame.init()
+
+    # Define screen width/height
+    screen_width = 90 * 10
+    board_height = 100 * 10
+    screen_height = board_height + int(.14 * board_height)
+
+    # Define colors
+    board_color = (199, 158, 89)
+    red_color = (255, 0, 0)
+    blue_color = (0, 43, 198)
+    black_color = (0, 0, 0)
+    white_color = (255, 255, 255)
+
+    # Define piece dimensions
+    piece_width = int(screen_width * 0.10)
+    piece_height = int(screen_width * 0.10)
+
+    # Create screen
+    screen = pygame.display.set_mode([screen_width, screen_height])
+
+    # Import background image
+    bg = pygame.image.load(os.path.join('images', 'empty_board.png'))
+    bg_scaled = pygame.transform.scale(bg, (screen_width, board_height))
+
+    # Create surface of same color as board at bottom to extend usable space
+    bottom_space = pygame.Surface((screen_width, screen_height - board_height))
+
+    # Create dict to map game location string to screen coord - [col, row]
+    board_to_coord_map = {}
+    col_counter = 0
+    for col in ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i']:
+        for row in range(1, 11):
+            board_to_coord_map[col + str(row)] = (0.05 * screen_width + .112676 * screen_width * col_counter,
+                                                  0.05 * screen_width + .112676 * screen_width * (row-1))
+        col_counter += 1
+
+    # Generate list of rectangles to detect clicking
+    piece_rect_list = []
+    for key, val in board_to_coord_map.items():
+        location_rect = pygame.Rect(0, 0, piece_width, piece_height)
+        location_rect.center = val
+        piece_rect_list.append(location_rect)
+
+    # Create game won font and message font
+    pygame.font.init()
+    endgame_font = pygame.font.SysFont('Palatino Linotype', 70)
+    message_font = pygame.font.SysFont('Palatino Linotype', 20)
+
+    # Load piece images
+    red_king = pygame.transform.scale(pygame.image.load(os.path.join('images', 'red_king.png')),
+                                      (piece_width, piece_height))
+    blue_king = pygame.transform.scale(pygame.image.load(os.path.join('images', 'blue_king.png')),
+                                       (piece_width, piece_height))
+    red_guard = pygame.transform.scale(pygame.image.load(os.path.join('images', 'red_advisor.png')),
+                                       (piece_width, piece_height))
+    blue_guard = pygame.transform.scale(pygame.image.load(os.path.join('images', 'blue_advisor.png')),
+                                        (piece_width, piece_height))
+    red_horse = pygame.transform.scale(pygame.image.load(os.path.join('images', 'red_horse.png')),
+                                       (piece_width, piece_height))
+    blue_horse = pygame.transform.scale(pygame.image.load(os.path.join('images', 'blue_horse.png')),
+                                        (piece_width, piece_height))
+    red_elephant = pygame.transform.scale(pygame.image.load(os.path.join('images', 'red_elephant.png')),
+                                          (piece_width, piece_height))
+    blue_elephant = pygame.transform.scale(pygame.image.load(os.path.join('images', 'blue_elephant.png')),
+                                           (piece_width, piece_height))
+    red_chariot = pygame.transform.scale(pygame.image.load(os.path.join('images', 'red_chariot.png')),
+                                         (piece_width, piece_height))
+    blue_chariot = pygame.transform.scale(pygame.image.load(os.path.join('images', 'blue_chariot.png')),
+                                          (piece_width, piece_height))
+    red_cannon = pygame.transform.scale(pygame.image.load(os.path.join('images', 'red_cannon.png')),
+                                        (piece_width, piece_height))
+    blue_cannon = pygame.transform.scale(pygame.image.load(os.path.join('images', 'blue_cannon.png')),
+                                         (piece_width, piece_height))
+    red_soldier = pygame.transform.scale(pygame.image.load(os.path.join('images', 'red_pawn.png')),
+                                         (piece_width, piece_height))
+    blue_soldier = pygame.transform.scale(pygame.image.load(os.path.join('images', 'blue_pawn.png')),
+                                          (piece_width, piece_height))
+
+    # Load skip and surrender buttons
+    skip_button = pygame.transform.scale(pygame.image.load(os.path.join('images', 'skip_button.png')), (piece_width, piece_width))
+    surrender_button = pygame.transform.scale(pygame.image.load(os.path.join('images', 'surrender_button.png')), (piece_width, piece_width))
+
+    # Generate rectangles to detect clicking of skip and surrender button
+    skip_button_rect = skip_button.get_rect()
+    skip_button_rect.center = (screen_width * .25, board_height + (screen_height - board_height) * .5)
+    surrender_button_rect = surrender_button.get_rect()
+    surrender_button_rect.center = (screen_width * .75, board_height + (screen_height - board_height) * .5)
+
+    # Load buttons for horse/elephant swapping and generate rects
+    left_button = pygame.transform.scale(pygame.image.load(os.path.join('images', 'left_icon.png')), (int(piece_width * .8), int(piece_width * .8)))
+    right_button = pygame.transform.scale(pygame.image.load(os.path.join('images', 'right_icon.png')), (int(piece_width * .8), int(piece_width * .8)))
+    both_button = pygame.transform.scale(pygame.image.load(os.path.join('images', 'both_icon.png')), (int(piece_width * .8), int(piece_width * .8)))
+    none_button = pygame.transform.scale(pygame.image.load(os.path.join('images', 'none_button.png')), (int(piece_width * .8), int(piece_width * .8)))
+
+    left_button_rect = left_button.get_rect()
+    left_button_rect.center = (screen_width * .2, board_height + (screen_height - board_height) * .64)
+    right_button_rect = right_button.get_rect()
+    right_button_rect.center = (screen_width * .4, board_height + (screen_height - board_height) * .64)
+    both_button_rect = both_button.get_rect()
+    both_button_rect.center = (screen_width * .6, board_height + (screen_height - board_height) * .64)
+    none_button_rect = none_button.get_rect()
+    none_button_rect.center = (screen_width * .8, board_height + (screen_height - board_height) * .64)
+
+    # Load button to select yes for AI
+    yes_button = pygame.transform.scale(pygame.image.load(os.path.join('images', 'yes_button.png')), (int(piece_width * .8), int(piece_width * .8)))
+    yes_button_rect = yes_button.get_rect()
+    yes_button_rect.center = (screen_width * .2, board_height + (screen_height - board_height) * .64)
+
+    # Init Janggi game
     game = JanggiGame()
-    while game.get_game_state() == 'UNFINISHED':
-        game.get_janggi_board().display_board()
-        turn = game.get_player_turn().upper()
-        from_location, to_location = input(turn + " " + "Please make your move: ").split()
-        move = game.make_move(from_location, to_location)
-        if move is False:
-            print("Invalid move, please make a valid move")
-    print('\n'*10)
-    print(game.get_game_state())
+
+    def update_gui():
+        """Update the pygame gui"""
+        game_board = game.get_janggi_board().get_board()
+        for key_col in sorted(game_board):
+            row_counter = 1
+            for value in game_board[key_col]:
+                if value != "__" and value.get_type() == "Soldier":
+                    if value.get_team() == 'red':
+                        coord = (board_to_coord_map[key_col + str(row_counter)][0], board_to_coord_map[key_col + str(row_counter)][1])
+                        screen.blit(red_soldier, (coord[0] - piece_width // 2, coord[1] - piece_height // 2))
+                    if value.get_team() == 'blue':
+                        coord = (board_to_coord_map[key_col + str(row_counter)][0], board_to_coord_map[key_col + str(row_counter)][1])
+                        screen.blit(blue_soldier, (coord[0] - piece_width // 2, coord[1] - piece_height // 2))
+                elif value != "__" and value.get_type() == "General":
+                    if value.get_team() == 'red':
+                        coord = (board_to_coord_map[key_col + str(row_counter)][0], board_to_coord_map[key_col + str(row_counter)][1])
+                        screen.blit(red_king, (coord[0] - piece_width // 2, coord[1] - piece_height // 2))
+                    if value.get_team() == 'blue':
+                        coord = (board_to_coord_map[key_col + str(row_counter)][0], board_to_coord_map[key_col + str(row_counter)][1])
+                        screen.blit(blue_king, (coord[0] - piece_width // 2, coord[1] - piece_height // 2))
+                elif value != "__" and value.get_type() == "Guard":
+                    if value.get_team() == 'red':
+                        coord = (board_to_coord_map[key_col + str(row_counter)][0], board_to_coord_map[key_col + str(row_counter)][1])
+                        screen.blit(red_guard, (coord[0] - piece_width // 2, coord[1] - piece_height // 2))
+                    if value.get_team() == 'blue':
+                        coord = (board_to_coord_map[key_col + str(row_counter)][0], board_to_coord_map[key_col + str(row_counter)][1])
+                        screen.blit(blue_guard, (coord[0] - piece_width // 2, coord[1] - piece_height // 2))
+                elif value != "__" and value.get_type() == "Horse":
+                    if value.get_team() == 'red':
+                        coord = (board_to_coord_map[key_col + str(row_counter)][0], board_to_coord_map[key_col + str(row_counter)][1])
+                        screen.blit(red_horse, (coord[0] - piece_width // 2, coord[1] - piece_height // 2))
+                    if value.get_team() == 'blue':
+                        coord = (board_to_coord_map[key_col + str(row_counter)][0], board_to_coord_map[key_col + str(row_counter)][1])
+                        screen.blit(blue_horse, (coord[0] - piece_width // 2, coord[1] - piece_height // 2))
+                elif value != "__" and value.get_type() == "Elephant":
+                    if value.get_team() == 'red':
+                        coord = (board_to_coord_map[key_col + str(row_counter)][0], board_to_coord_map[key_col + str(row_counter)][1])
+                        screen.blit(red_elephant, (coord[0] - piece_width // 2, coord[1] - piece_height // 2))
+                    if value.get_team() == 'blue':
+                        coord = (board_to_coord_map[key_col + str(row_counter)][0], board_to_coord_map[key_col + str(row_counter)][1])
+                        screen.blit(blue_elephant, (coord[0] - piece_width // 2, coord[1] - piece_height // 2))
+                elif value != "__" and value.get_type() == "Chariot":
+                    if value.get_team() == 'red':
+                        coord = (board_to_coord_map[key_col + str(row_counter)][0], board_to_coord_map[key_col + str(row_counter)][1])
+                        screen.blit(red_chariot, (coord[0] - piece_width // 2, coord[1] - piece_height // 2))
+                    if value.get_team() == 'blue':
+                        coord = (board_to_coord_map[key_col + str(row_counter)][0], board_to_coord_map[key_col + str(row_counter)][1])
+                        screen.blit(blue_chariot, (coord[0] - piece_width // 2, coord[1] - piece_height // 2))
+                elif value != "__" and value.get_type() == "Cannon":
+                    if value.get_team() == 'red':
+                        coord = (board_to_coord_map[key_col + str(row_counter)][0], board_to_coord_map[key_col + str(row_counter)][1])
+                        screen.blit(red_cannon, (coord[0] - piece_width // 2, coord[1] - piece_height // 2))
+                    if value.get_team() == 'blue':
+                        coord = (board_to_coord_map[key_col + str(row_counter)][0], board_to_coord_map[key_col + str(row_counter)][1])
+                        screen.blit(blue_cannon, (coord[0] - piece_width // 2, coord[1] - piece_height // 2))
+
+                row_counter += 1
+        return True
+
+    # Run game loop
+    running = True
+    from_coords = None
+    to_coords = None
+    from_rect = None
+    blue_swap = False
+    red_swap = False
+    swap_over = False
+    ai_decision = False
+    ai_yes = False
+
+    # CODE BELOW IS THE GAME LOOP
+    while running:
+        skip_flag = False
+        surrender_flag = False
+        player_turn = game.get_player_turn()
+
+        if red_swap is True and blue_swap is True:
+            swap_over = True
+
+        if to_coords is not None:
+            from_coords = None
+            to_coords = None
+            from_rect = None
+
+        for event in pygame.event.get():
+            # Did the user click the window close button?
+            if event.type == pygame.QUIT:
+                running = False
+            if event.type == pygame.MOUSEBUTTONUP and from_coords is not None and swap_over is True and ai_decision is True:
+                for rectangle in piece_rect_list:
+                    if rectangle.collidepoint(event.pos):
+                        to_coords = rectangle.center
+            if event.type == pygame.MOUSEBUTTONUP and from_coords is None and swap_over is True and ai_decision is True:
+                for rectangle in piece_rect_list:
+                    if rectangle.collidepoint(event.pos):
+                        from_coords = rectangle.center
+                        from_rect = rectangle
+            if event.type == pygame.MOUSEBUTTONUP and surrender_button_rect.collidepoint(event.pos) and swap_over is True and ai_decision is True:
+                surrender_flag = True
+            if event.type == pygame.MOUSEBUTTONUP and skip_button_rect.collidepoint(event.pos) and swap_over is True and ai_decision is True:
+                skip_flag = True
+            if event.type == pygame.MOUSEBUTTONUP and left_button_rect.collidepoint(event.pos) and swap_over is False and ai_decision is True:
+                if player_turn == 'blue':
+                    blue_swap = True
+                    game.swap_horse_elephant(player_turn, 'left')
+                    game.change_turn()
+                else:
+                    red_swap = True
+                    game.swap_horse_elephant(player_turn, 'left')
+                    game.change_turn()
+            if event.type == pygame.MOUSEBUTTONUP and right_button_rect.collidepoint(event.pos) and swap_over is False and ai_decision is True:
+                if player_turn == 'blue':
+                    blue_swap = True
+                    game.swap_horse_elephant(player_turn, 'right')
+                    game.change_turn()
+                else:
+                    red_swap = True
+                    game.swap_horse_elephant(player_turn, 'right')
+                    game.change_turn()
+            if event.type == pygame.MOUSEBUTTONUP and both_button_rect.collidepoint(event.pos) and swap_over is False and ai_decision is True:
+                if player_turn == 'blue':
+                    blue_swap = True
+                    game.swap_horse_elephant(player_turn, 'both')
+                    game.change_turn()
+                else:
+                    red_swap = True
+                    game.swap_horse_elephant(player_turn, 'both')
+                    game.change_turn()
+            if event.type == pygame.MOUSEBUTTONUP and none_button_rect.collidepoint(event.pos) and swap_over is False and ai_decision is True:
+                if player_turn == 'blue':
+                    blue_swap = True
+                    game.swap_horse_elephant(player_turn, 'neither')
+                    game.change_turn()
+                else:
+                    red_swap = True
+                    game.swap_horse_elephant(player_turn, 'neither')
+                    game.change_turn()
+            if event.type == pygame.MOUSEBUTTONUP and yes_button_rect.collidepoint(event.pos) and ai_decision is False:
+                ai_decision = True
+                ai_yes = True
+            if event.type == pygame.MOUSEBUTTONUP and none_button_rect.collidepoint(event.pos) and ai_decision is False:
+                ai_decision = True
+
+        # pass turn if skip_flag is true
+        player_in_check_at_beginning_of_turn = game.is_in_check(game.get_player_turn())
+        if skip_flag is True and player_in_check_at_beginning_of_turn is False:
+            game.change_turn()
+
+        # End game if player surrenders
+        if surrender_flag is True:
+            if player_turn == 'red':
+                game.set_game_state('BLUE_WON')
+            else:
+                game.set_game_state('RED_WON')
+
+        from_location = None
+        to_location = None
+        # Convert from, to coords to location input
+        for key, val in board_to_coord_map.items():
+            if from_coords == (int(val[0]), int(val[1])):
+                from_location = key
+            if to_coords == (int(val[0]), int(val[1])):
+                to_location = key
+
+        # Make Move
+        if from_location is not None and to_location is not None:
+            game.make_move(from_location, to_location)
+
+        # Clear Screen
+        screen.fill(white_color)
+
+        # Add background image
+        screen.blit(bg_scaled, (0, 0))
+
+        # Add dead space at bottom
+        screen.blit(bottom_space, (0, board_height))
+
+        # fill in the bottom space with board color
+        pygame.Surface.fill(bottom_space, board_color)
+
+        # get team color and update move prompter
+        if player_turn == 'red' and ai_yes is False:
+            turn = red_color
+        elif player_turn == 'blue':
+            turn = blue_color
+        else:
+            turn = black_color
+
+        # Place colored circle at bottom to signal turn
+        if game.get_game_state() == "UNFINISHED" and swap_over is True:
+            filled_circle_size = (0.14 * screen_height) // 4
+            circle_thickness = int(.2 * filled_circle_size)
+            pygame.draw.circle(screen, turn, (screen_width // 2, board_height + (screen_height - board_height) * .5), filled_circle_size)
+            pygame.draw.circle(screen, black_color, (screen_width // 2, board_height + (screen_height - board_height) * .5), filled_circle_size + circle_thickness, circle_thickness)
+
+        # add pass and surrender buttons as long as game is unfinished
+        if game.get_game_state() == "UNFINISHED" and swap_over is True and (ai_yes is False or (ai_yes is True and player_turn == 'blue')):
+            screen.blit(skip_button, skip_button_rect)
+            screen.blit(surrender_button, surrender_button_rect)
+
+        # Draw rectangle around selected from move
+        if from_rect is not None and swap_over is True and game.get_game_state() == "UNFINISHED":
+            from_square = game.get_janggi_board().get_square(from_location)
+            if from_square != "__":
+                if player_turn == 'red' and from_square.get_team() == 'red':
+                    pygame.draw.rect(screen, red_color, from_rect, 4)
+                elif player_turn == 'blue' and from_square.get_team() == 'blue':
+                    pygame.draw.rect(screen, blue_color, from_rect, 4)
+
+        # print winning message after checkmate
+        if game.get_game_state() == 'BLUE_WON':
+            winning_message = endgame_font.render("Blue Team Won", False, blue_color)
+            screen.blit(winning_message, ((screen_width - winning_message.get_width()) // 2, ((screen_height - board_height) - winning_message.get_height()) // 2 + board_height))
+        elif game.get_game_state() == 'RED_WON':
+            winning_message = endgame_font.render("Red Team Won", False, red_color)
+            screen.blit(winning_message, ((screen_width - winning_message.get_width()) // 2, ((screen_height - board_height) - winning_message.get_height()) // 2 + board_height))
+
+        # output buttons/message for elephant/horse swap at beginning of game
+        if swap_over is False and ai_decision is True:
+            team_turn = game.get_player_turn()
+            swap_prompt_message = team_turn.upper() + " Please choose to swap Horses and Elephants. Choose Left, Both, Right, or None"
+            swap_prompt = message_font.render(swap_prompt_message, False, black_color)
+            screen.blit(swap_prompt, ((screen_width - swap_prompt.get_width()) // 2, ((screen_height - board_height) - swap_prompt.get_height()) * .1 + board_height))
+            screen.blit(left_button, left_button_rect)
+            screen.blit(right_button, right_button_rect)
+            screen.blit(both_button, both_button_rect)
+            screen.blit(none_button, none_button_rect)
+
+        # output AI decision buttons at beginning of game
+        if ai_decision is False:
+            ai_prompt_message = "Would you like to play vs a computer? Select Yes or No"
+            ai_prompt = message_font.render(ai_prompt_message, False, black_color)
+            screen.blit(ai_prompt, ((screen_width - ai_prompt.get_width()) // 2, ((screen_height - board_height) - ai_prompt.get_height()) * .1 + board_height))
+            screen.blit(none_button, none_button_rect)
+            screen.blit(yes_button, yes_button_rect)
+
+        # Update gui
+        update_gui()
+        pygame.display.update()
+
+        # AI loop
+        if ai_yes is True and player_turn == 'red' and swap_over is True and game.get_game_state() == "UNFINISHED":
+            # necesary to add loop in case the AI tries to make an invalid move (since the auto_move functions doesn't validate all moves)
+            loop_iterations = 0
+            while game.get_player_turn() == 'red':
+                move_set = game.auto_move(player_turn)
+                pygame.time.delay(1000)
+                game.make_move(move_set[0], move_set[1])
+                player_in_check_at_beginning_of_turn = game.is_in_check(game.get_player_turn())
+                # Sometimes the AI gets stuck if their only valid move is to pass, since passing isn't in move set
+                if loop_iterations > 10 and player_in_check_at_beginning_of_turn is False:
+                    game.change_turn()
+                loop_iterations += 1
+
+    pygame.quit()
 
 
 if __name__ == '__main__':
