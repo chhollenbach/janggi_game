@@ -2,24 +2,21 @@
 
 **Intro Blurb**
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna 
-aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. 
-Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint 
-occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+This project is an implementation of the chess variant known as Janggi. The primary purpose of this project was to refine my OOP skills and also explore creating a basic GUI and AI.
+
+For a detailed rule guide please see: https://en.wikipedia.org/wiki/Janggi
 
 **Implementation Details**
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna 
-aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. 
-Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint 
-occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+Currently the entire game is implemented using Python. The backend logic follows OOP principles. I used Pygame for the GUI. The AI is very simple at the moment, it will simply attempt to capture the most valuable piece it is able to capture, or just move randomly if it has no capturable pieces.
 
-**Screenshots**
+**GUI Demo*
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna 
-aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. 
-Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint 
-occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+*Static*
+![](readme_files/Janggi_screen.jpg)
+
+*GIF*
+![](readme_files/janggi_demo.gif)
 
 **Upcoming Features**
 
