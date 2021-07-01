@@ -13,10 +13,3 @@ Currently the entire game is implemented using Python. The backend logic follows
 **GUI Demo**
 
 ![](readme_files/janggi_demo.gif)
-
-**Upcoming Features**
-
-* Improved user flow, such as opening menu
-* Improve AI with minimax algo
-* Refactor and modularize Pygame GUI code
-* Package into Android App
